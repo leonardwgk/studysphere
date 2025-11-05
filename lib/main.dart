@@ -1,9 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:studysphere_app/firebase_options.dart';
+import 'package:studysphere_app/features/auth/pages/auth_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -18,14 +20,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'StudySphere',
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('StudySphere Connected!'),
-        ),
-        body: const Center(
-          child: Text('Selamat Datang di StudySphere!'),
-        ),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
       ),
+
+      home: const AuthGate(),
     );
   }
 }
