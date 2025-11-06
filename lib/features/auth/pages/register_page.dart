@@ -3,6 +3,7 @@ import 'package:studysphere_app/features/auth/data/field_errors.dart';
 import 'package:studysphere_app/features/auth/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:studysphere_app/shared/constant.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -136,36 +137,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         });
                       }
                     },
-                    decoration: InputDecoration(
+                    decoration: kGetTextFieldDecoration(
                       hintText: "Email",
-                      prefixIcon: Icon(
-                        Icons.email_outlined,
-                        color: Colors.grey[600],
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(color: Colors.blue),
-                      ),
-                      errorText: _emailErrorText,
-                      errorMaxLines: 2,
-                      errorStyle: const TextStyle(color: Colors.red),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(color: Colors.red),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(
-                          color: Colors.blue,
-                          width: 2,
-                        ),
-                      ),
+                      icon: Icons.lock_outlined,
+                      errorText: _emailErrorText, // Ganti dengan variabel error password
                     ),
                     keyboardType: TextInputType.emailAddress,
                   ),
@@ -181,36 +156,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         });
                       }
                     },
-                    decoration: InputDecoration(
-                      hintText: "Password (minimal 6 karakter)",
-                      prefixIcon: Icon(
-                        Icons.lock_outlined,
-                        color: Colors.grey[600],
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(color: Colors.blue),
-                      ),
-                      errorText: _passwordErrorText,
-                      errorMaxLines: 2,
-                      errorStyle: const TextStyle(color: Colors.red),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(color: Colors.red),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(
-                          color: Colors.blue,
-                          width: 2,
-                        ),
-                      ),
+                    decoration: kGetTextFieldDecoration(
+                      hintText: "Password (Minimal 6 karakter)",
+                      icon: Icons.lock_outlined,
+                      errorText: _passwordErrorText, // Ganti dengan variabel error password
                     ),
                     obscureText: true,
                   ),
@@ -226,36 +175,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         });
                       }
                     },
-                    decoration: InputDecoration(
+                    decoration: kGetTextFieldDecoration(
                       hintText: "Konfirmasi Password",
-                      prefixIcon: Icon(
-                        Icons.lock_outlined,
-                        color: Colors.grey[600],
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(color: Colors.blue),
-                      ),
-                      errorText: _confirmPasswordErrorText,
-                      errorMaxLines: 2,
-                      errorStyle: const TextStyle(color: Colors.red),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(color: Colors.red),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(
-                          color: Colors.blue,
-                          width: 2,
-                        ),
-                      ),
+                      icon: Icons.lock_outlined,
+                      errorText: _passwordErrorText, // Ganti dengan variabel error password
                     ),
                     obscureText: true,
                   ),
