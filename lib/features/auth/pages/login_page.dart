@@ -74,7 +74,6 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // --- LOGO ---
-                  // Image(image: AssetImage('assets/images/FullLogo.jpg')),
                   Image.asset('assets/img/logo.png', height: 120),
                   const SizedBox(height: 40.0),
 
@@ -88,37 +87,6 @@ class _LoginPageState extends State<LoginPage> {
                         });
                       }
                     },
-                    // decoration: InputDecoration(
-                    //   hintText: "Email",
-                    //   prefixIcon: Icon(
-                    //     Icons.email_outlined,
-                    //     color: Colors.grey[600],
-                    //   ),
-                    //   filled: true,
-                    //   fillColor: Colors.grey[100],
-                    //   border: OutlineInputBorder(
-                    //     borderRadius: BorderRadius.circular(12.0),
-                    //     borderSide: BorderSide.none,
-                    //   ),
-                    //   focusedBorder: OutlineInputBorder(
-                    //     borderRadius: BorderRadius.circular(12.0),
-                    //     borderSide: const BorderSide(color: Colors.blue),
-                    //   ),
-                    //   errorText: _emailErrorText,
-                    //   errorMaxLines: 2,
-                    //   errorStyle: const TextStyle(color: Colors.red),
-                    //   errorBorder: OutlineInputBorder(
-                    //     borderRadius: BorderRadius.circular(12.0),
-                    //     borderSide: const BorderSide(color: Colors.red),
-                    //   ),
-                    //   focusedErrorBorder: OutlineInputBorder(
-                    //     borderRadius: BorderRadius.circular(12.0),
-                    //     borderSide: const BorderSide(
-                    //       color: Colors.blue,
-                    //       width: 2,
-                    //     ),
-                    //   ),
-                    // ),
                     decoration: kGetTextFieldDecoration(
                       hintText: "Email",
                       icon: Icons.email_outlined,
@@ -141,7 +109,8 @@ class _LoginPageState extends State<LoginPage> {
                     decoration: kGetTextFieldDecoration(
                       hintText: "Password",
                       icon: Icons.lock_outlined,
-                      errorText: _passwordErrorText, // Ganti dengan variabel error password
+                      errorText:
+                          _passwordErrorText, // Ganti dengan variabel error password
                     ),
                     obscureText: true,
                   ),
@@ -155,7 +124,9 @@ class _LoginPageState extends State<LoginPage> {
                           child: ElevatedButton(
                             onPressed: _login,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
                               padding: const EdgeInsets.symmetric(
                                 vertical: 16.0,
                               ),
@@ -172,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
-                  const SizedBox(height: 20.0),
+                  const SizedBox(height: 4.0),
 
                   // -- Tombol ke halaman Register ---
                   Row(
@@ -189,9 +160,11 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           );
                         },
-                        child: const Text(
+                        child: Text(
                           "Daftar di sini",
-                          style: TextStyle(color: Colors.blue),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                         ),
                       ),
                     ],
