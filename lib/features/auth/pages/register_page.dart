@@ -198,7 +198,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12.0),
                               ),
-                              backgroundColor: Colors.blue,
+                              backgroundColor: Theme.of(context).colorScheme.primary,
                             ),
                             child: const Text(
                               "Daftar",
@@ -219,9 +219,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        child: const Text(
+                        child: Text(
                           "Login di sini",
-                          style: TextStyle(color: Colors.blue),
+                          style: TextStyle(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ],
