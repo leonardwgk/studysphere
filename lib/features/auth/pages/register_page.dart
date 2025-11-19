@@ -13,18 +13,24 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final AuthService _authService = AuthService();
+
   // text controller
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
-  final AuthService _authService = AuthService();
+
   // loading state
   bool _isLoading = false;
 
   String? _emailErrorText;
   String? _passwordErrorText;
   String? _confirmPasswordErrorText;
+
+  void popPage() {
+    Navigator.pop(context);
+  }
 
   // fungsi register
   void _register() async {
@@ -35,13 +41,12 @@ class _RegisterPageState extends State<RegisterPage> {
       _passwordErrorText = null;
       _confirmPasswordErrorText = null;
     });
-
     // validasi input
     final String email = _emailController.text.trim();
+    final bool isEmailValid = EmailValidator.validate(email);
+
     final String password = _passwordController.text;
     final String confirmPassword = _confirmPasswordController.text;
-
-    final bool isEmailValid = EmailValidator.validate(email);
 
     bool hasClientError = false;
 
@@ -64,7 +69,7 @@ class _RegisterPageState extends State<RegisterPage> {
     if (confirmPassword.isEmpty) {
       _confirmPasswordErrorText = "Konfirmasi password tidak boleh kosong.";
       hasClientError = true;
-    } else if (password != confirmPassword) {
+    } else if (password.isNotEmpty && password != confirmPassword) {
       _confirmPasswordErrorText = "Password dan konfirmasi tidak sesuai.";
       hasClientError = true;
     }
@@ -79,13 +84,13 @@ class _RegisterPageState extends State<RegisterPage> {
     // Panggil auth service
     try {
       await _authService.registerWithEmailAndPassword(
-        _emailController.text,
-        _passwordController.text,
+        email: _emailController.text,
+        password: _passwordController.text,
       );
 
       if (mounted) {
         // Kembali ke halaman login
-        Navigator.pop(context);
+        popPage();
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -140,7 +145,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     decoration: kGetTextFieldDecoration(
                       hintText: "Email",
                       icon: Icons.lock_outlined,
-                      errorText: _emailErrorText, // Ganti dengan variabel error password
+                      errorText:
+                          _emailErrorText, // Ganti dengan variabel error password
                     ),
                     keyboardType: TextInputType.emailAddress,
                   ),
@@ -159,7 +165,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     decoration: kGetTextFieldDecoration(
                       hintText: "Password (Minimal 6 karakter)",
                       icon: Icons.lock_outlined,
-                      errorText: _passwordErrorText, // Ganti dengan variabel error password
+                      errorText:
+                          _passwordErrorText, // Ganti dengan variabel error password
                     ),
                     obscureText: true,
                   ),
@@ -178,7 +185,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     decoration: kGetTextFieldDecoration(
                       hintText: "Konfirmasi Password",
                       icon: Icons.lock_outlined,
-                      errorText: _passwordErrorText, // Ganti dengan variabel error password
+                      errorText:
+                          _passwordErrorText, // Ganti dengan variabel error password
                     ),
                     obscureText: true,
                   ),
@@ -198,7 +206,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12.0),
                               ),
-                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
                             ),
                             child: const Text(
                               "Daftar",
@@ -221,7 +231,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         },
                         child: Text(
                           "Login di sini",
-                          style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                         ),
                       ),
                     ],

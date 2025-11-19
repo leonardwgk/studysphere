@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:studysphere_app/features/auth/pages/login_page.dart';
+import 'package:studysphere_app/features/auth/services/auth_service.dart';
 import 'package:studysphere_app/features/home/pages/home_gate.dart';
 
 class AuthGate extends StatelessWidget {
@@ -8,24 +9,26 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final AuthService authService = AuthService();
-
-    return StreamBuilder<User?>(
-      // Dengerkan strean status autentikasi
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        // Tampilan loading
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        // Jika user sudah login, tampilkan HomePage
-        if (snapshot.hasData) {
-          return const HomePage();
-        }
-        // jika user null (belum login), tampilkan LoginPage
-        return const LoginPage();
+    return ValueListenableBuilder(
+      valueListenable: authService,
+      builder: (context, value, child) {
+        return StreamBuilder<User?>(
+          // Dengerkan strean status autentikasi
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
+            if (snapshot.hasError) {
+              return const Text('Something went wrong');
+            } else if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator.adaptive()),
+              );
+            } else if (snapshot.hasData) {
+              return const HomePage();
+            } else {
+              return const LoginPage();
+            }
+          },
+        );
       },
     );
   }
