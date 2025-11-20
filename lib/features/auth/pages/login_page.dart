@@ -32,8 +32,8 @@ class _LoginPageState extends State<LoginPage> {
     try {
       // Panggil service
       await _authService.signInWithEmailAndPassword(
-        _emailController.text,
-        _passwordController.text,
+        email: _emailController.text,
+        password: _passwordController.text,
       );
       // AuthGate otomatis pindah halaman jika berhasil login
     } on FirebaseAuthException catch (e) {
