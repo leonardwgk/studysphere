@@ -5,6 +5,7 @@ import 'package:studysphere_app/features/friend/pages/friend_page.dart';
 import 'package:studysphere_app/features/home/data/tabitems.dart';
 import 'package:studysphere_app/features/home/pages/home_page.dart';
 import 'package:studysphere_app/features/profile/pages/profile_page.dart';
+import 'package:studysphere_app/features/profile/widgets/app_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -58,23 +59,24 @@ class _HomePageState extends State<HomePage> {
     TabItem('You', Icons.person_2_outlined),
   ];
 
+  PreferredSizeWidget? _buildAppBar(AuthService authService) {
+    // 2. PROFILE: AppBar Custom (Putih, Tulisan Besar)
+    if (_currIdx == 3) {
+      return PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: ProfileAppBar(),
+      );
+    }
+
+    // 3. DEFAULT
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final AuthService authService = AuthService();
     return Scaffold(
-      appBar: _currIdx == 0
-          ? null
-          : AppBar(
-              title: Text(_tabs[_currIdx].label),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed: () async {
-                    await authService.signOut();
-                  },
-                ),
-              ],
-            ),
+      appBar: _buildAppBar(authService),
 
       body: IndexedStack(index: _currIdx, children: _pages),
 
