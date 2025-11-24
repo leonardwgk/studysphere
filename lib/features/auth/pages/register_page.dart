@@ -106,6 +106,12 @@ class _RegisterPageState extends State<RegisterPage> {
           context,
         ).showSnackBar(SnackBar(content: Text(errors.global!)));
       }
+    } catch (e) {
+      if (!mounted) return;
+      // Handle generic errors (e.g. Firestore network error)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Terjadi kesalahan: ${e.toString()}")),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -219,7 +225,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ),
                         ),
-                  const SizedBox(height: 20.0),
+                  const SizedBox(height: 4.0),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

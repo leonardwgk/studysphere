@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:studysphere_app/features/auth/pages/login_page.dart';
-import 'package:studysphere_app/features/auth/services/auth_service.dart';
 import 'package:studysphere_app/features/home/pages/home_gate.dart';
 
 class AuthGate extends StatelessWidget {
@@ -9,26 +8,24 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: authService,
-      builder: (context, value, child) {
-        return StreamBuilder<User?>(
-          // Dengerkan strean status autentikasi
-          stream: FirebaseAuth.instance.authStateChanges(),
-          builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
-            if (snapshot.hasError) {
-              return const Text('Something went wrong');
-            } else if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator.adaptive()),
-              );
-            } else if (snapshot.hasData) {
-              return const HomePage();
-            } else {
-              return const LoginPage();
-            }
-          },
-        );
+    return StreamBuilder<User?>(
+      // Listen to the Firebase Auth Stream directly
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        // 1. If waiting for connection
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // 2. If we have a user -> Go to Home
+        if (snapshot.hasData) {
+          return const HomePage();
+        }
+
+        // 3. If no user -> Go to Login
+        return const LoginPage();
       },
     );
   }
