@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class StartStudyButton extends StatelessWidget {
-  const StartStudyButton({Key? key}) : super(key: key);
+  const StartStudyButton({super.key});
 
   @override
   Widget build(BuildContext context) {

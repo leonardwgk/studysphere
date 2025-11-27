@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  table_calendar: ^3.0.9
   
   firebase_core: ^4.2.0
   firebase_auth: ^6.1.2

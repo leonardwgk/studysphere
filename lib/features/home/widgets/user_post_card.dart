@@ -17,8 +17,8 @@ class UserPostCard extends StatelessWidget {
     required this.duration,
     required this.focusTime,
     required this.breakTime,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

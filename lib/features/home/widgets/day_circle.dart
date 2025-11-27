@@ -11,8 +11,8 @@ class DayCircle extends StatelessWidget {
     required this.number,
     required this.isHighlighted,
     this.color = Colors.black, // Default color
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
