@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/profile/widgets/action_buttons.dart';
-import 'package:studysphere_app/features/profile/widgets/badges_section.dart';
-import 'package:studysphere_app/features/profile/widgets/profile_header.dart';
-import 'package:studysphere_app/features/profile/widgets/weekly_report_section.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});

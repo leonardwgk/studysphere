@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:studysphere_app/features/home/widgets/study_stat_card.dart';
 
 class StatsSection extends StatelessWidget {
-  const StatsSection({Key? key}) : super(key: key);
+  const StatsSection({super.key});
 
   @override
   Widget build(BuildContext context) {

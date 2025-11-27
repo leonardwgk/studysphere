@@ -15,8 +15,8 @@ class StudyStatCard extends StatelessWidget {
     required this.breakTime,
     required this.color,
     required this.icon,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

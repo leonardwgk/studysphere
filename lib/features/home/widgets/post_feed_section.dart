@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:studysphere_app/features/home/widgets/user_post_card.dart';
 
 class PostFeedSection extends StatelessWidget {
-  const PostFeedSection({Key? key}) : super(key: key);
+  const PostFeedSection({super.key});
 
   // Data dummy nanti diganti ke StreamBuilder/FutureBuilder Firebase
   final List<Map<String, String>> dummyPosts = const [

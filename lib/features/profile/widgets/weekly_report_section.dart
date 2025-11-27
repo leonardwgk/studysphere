@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class WeeklyReportSection extends StatelessWidget {
-  const WeeklyReportSection();
+  const WeeklyReportSection({super.key});
 
   @override
   Widget build(BuildContext context) {
