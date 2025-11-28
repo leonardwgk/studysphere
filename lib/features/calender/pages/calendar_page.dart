@@ -43,7 +43,8 @@ class _CalendarPageState extends State<CalendarPage> {
   ];
 
   String _getRandomMotivation() {
-    final random = DateTime.now().millisecondsSinceEpoch % _motivationalQuotes.length;
+    final random =
+        DateTime.now().millisecondsSinceEpoch % _motivationalQuotes.length;
     return _motivationalQuotes[random];
   }
 
@@ -54,7 +55,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.blue.shade100,
         duration: '2 hours 30 minutes',
         topic: 'State Management dengan Provider',
-        notes: 'Mempelajari konsep state management, implementasi Provider, dan best practices dalam Flutter development.',
+        notes:
+            'Mempelajari konsep state management, implementasi Provider, dan best practices dalam Flutter development.',
       ),
     ],
     DateTime.utc(2025, 11, 3): [
@@ -63,7 +65,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.green.shade100,
         duration: '1 hour 45 minutes',
         topic: 'Integral dan Aplikasinya',
-        notes: 'Memahami konsep integral tentu dan tak tentu, serta aplikasinya dalam menghitung luas dan volume.',
+        notes:
+            'Memahami konsep integral tentu dan tak tentu, serta aplikasinya dalam menghitung luas dan volume.',
       ),
     ],
     DateTime.utc(2025, 11, 5): [
@@ -72,7 +75,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.orange.shade100,
         duration: '1 hour 30 minutes',
         topic: 'Tenses dan Passive Voice',
-        notes: 'Review semua tenses, penggunaan passive voice dalam berbagai konteks, dan latihan soal.',
+        notes:
+            'Review semua tenses, penggunaan passive voice dalam berbagai konteks, dan latihan soal.',
       ),
     ],
     DateTime.utc(2025, 11, 7): [
@@ -81,7 +85,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.purple.shade100,
         duration: '3 hours',
         topic: 'Binary Trees dan Traversal',
-        notes: 'Implementasi binary tree, berbagai metode traversal (inorder, preorder, postorder), dan aplikasinya.',
+        notes:
+            'Implementasi binary tree, berbagai metode traversal (inorder, preorder, postorder), dan aplikasinya.',
       ),
     ],
     DateTime.utc(2025, 11, 10): [
@@ -90,7 +95,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.pink.shade100,
         duration: '2 hours',
         topic: 'Design Thinking Process',
-        notes: 'Mempelajari 5 tahap design thinking: empathize, define, ideate, prototype, dan test.',
+        notes:
+            'Mempelajari 5 tahap design thinking: empathize, define, ideate, prototype, dan test.',
       ),
     ],
     DateTime.utc(2025, 11, 12): [
@@ -99,7 +105,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.indigo.shade100,
         duration: '2 hours 15 minutes',
         topic: 'Time Complexity dan Big O Notation',
-        notes: 'Analisis kompleksitas algoritma, memahami Big O, Big Theta, dan Big Omega notation.',
+        notes:
+            'Analisis kompleksitas algoritma, memahami Big O, Big Theta, dan Big Omega notation.',
       ),
     ],
     DateTime.utc(2025, 11, 15): [
@@ -108,7 +115,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.teal.shade100,
         duration: '1 hour 50 minutes',
         topic: 'SQL Queries dan Joins',
-        notes: 'Praktek berbagai jenis JOIN (INNER, LEFT, RIGHT, FULL), subqueries, dan optimization.',
+        notes:
+            'Praktek berbagai jenis JOIN (INNER, LEFT, RIGHT, FULL), subqueries, dan optimization.',
       ),
     ],
     DateTime.utc(2025, 11, 18): [
@@ -117,7 +125,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.amber.shade100,
         duration: '2 hours 20 minutes',
         topic: 'Hukum Newton dan Dinamika',
-        notes: 'Memahami tiga hukum Newton, aplikasi dalam kasus nyata, dan penyelesaian soal dinamika.',
+        notes:
+            'Memahami tiga hukum Newton, aplikasi dalam kasus nyata, dan penyelesaian soal dinamika.',
       ),
     ],
     DateTime.utc(2025, 11, 20): [
@@ -126,7 +135,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.cyan.shade100,
         duration: '3 hours 30 minutes',
         topic: 'React Hooks dan Context API',
-        notes: 'Deep dive ke React Hooks (useState, useEffect, useContext), dan state management dengan Context API.',
+        notes:
+            'Deep dive ke React Hooks (useState, useEffect, useContext), dan state management dengan Context API.',
       ),
     ],
     DateTime.utc(2025, 11, 22): [
@@ -135,7 +145,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.deepPurple.shade100,
         duration: '2 hours 40 minutes',
         topic: 'Supervised Learning - Linear Regression',
-        notes: 'Konsep supervised learning, implementasi linear regression, dan evaluasi model.',
+        notes:
+            'Konsep supervised learning, implementasi linear regression, dan evaluasi model.',
       ),
     ],
     DateTime.utc(2025, 11, 25): [
@@ -144,7 +155,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.red.shade100,
         duration: '1 hour 55 minutes',
         topic: 'Agile Methodology dan Scrum',
-        notes: 'Memahami prinsip Agile, framework Scrum, sprint planning, dan daily standup.',
+        notes:
+            'Memahami prinsip Agile, framework Scrum, sprint planning, dan daily standup.',
       ),
     ],
     DateTime.utc(2025, 11, 27): [
@@ -153,7 +165,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.lightBlue.shade100,
         duration: '4 hours',
         topic: 'Firebase Integration',
-        notes: 'Integrasi Firebase Authentication, Firestore Database, dan Cloud Storage dalam aplikasi mobile.',
+        notes:
+            'Integrasi Firebase Authentication, Firestore Database, dan Cloud Storage dalam aplikasi mobile.',
       ),
     ],
     DateTime.utc(2025, 11, 28): [
@@ -162,7 +175,8 @@ class _CalendarPageState extends State<CalendarPage> {
         color: Colors.blueGrey.shade100,
         duration: '2 hours 10 minutes',
         topic: 'AWS Services Overview',
-        notes: 'Pengenalan AWS EC2, S3, Lambda, dan basic deployment menggunakan cloud services.',
+        notes:
+            'Pengenalan AWS EC2, S3, Lambda, dan basic deployment menggunakan cloud services.',
       ),
     ],
   };
@@ -224,7 +238,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     _selectedDay = selectedDay;
                     _focusedDay = focusedDay;
                   });
-                  
+
                   // Navigate ke detail aktivitas
                   List<ActivityEvent> events = _getEventsForDay(selectedDay);
                   if (events.isNotEmpty) {
@@ -290,7 +304,10 @@ class _CalendarPageState extends State<CalendarPage> {
                       return Positioned(
                         bottom: 2,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 1,
+                          ),
                           decoration: BoxDecoration(
                             color: event.color,
                             borderRadius: BorderRadius.circular(4),
@@ -315,7 +332,8 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
 
             // Selected Day Info Card - Study Session Summary
-            if (_selectedDay != null && _getEventsForDay(_selectedDay!).isNotEmpty)
+            if (_selectedDay != null &&
+                _getEventsForDay(_selectedDay!).isNotEmpty)
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(20),
@@ -339,11 +357,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: Colors.white,
-                          size: 28,
-                        ),
+                        Icon(Icons.check_circle, color: Colors.white, size: 28),
                         const SizedBox(width: 12),
                         Text(
                           '${_selectedDay!.day} November 2025',
@@ -403,7 +417,11 @@ class _CalendarPageState extends State<CalendarPage> {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              Icon(Icons.access_time, color: Colors.white70, size: 16),
+                              Icon(
+                                Icons.access_time,
+                                color: Colors.white70,
+                                size: 16,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 _getEventsForDay(_selectedDay!).first.duration,
@@ -417,7 +435,11 @@ class _CalendarPageState extends State<CalendarPage> {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              Icon(Icons.topic, color: Colors.white70, size: 16),
+                              Icon(
+                                Icons.topic,
+                                color: Colors.white70,
+                                size: 16,
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -435,7 +457,10 @@ class _CalendarPageState extends State<CalendarPage> {
                     ),
                     const SizedBox(height: 12),
                     GestureDetector(
-                      onTap: () => _showActivityDetail(_selectedDay!, _getEventsForDay(_selectedDay!)),
+                      onTap: () => _showActivityDetail(
+                        _selectedDay!,
+                        _getEventsForDay(_selectedDay!),
+                      ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
@@ -474,7 +499,10 @@ class _CalendarPageState extends State<CalendarPage> {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Colors.orange.shade400, Colors.deepOrange.shade400],
+                    colors: [
+                      Colors.orange.shade400,
+                      Colors.deepOrange.shade400,
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -569,7 +597,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
   void _showActivityDetail(DateTime date, List<ActivityEvent> events) {
     final event = events.first;
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -593,11 +621,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     color: event.color,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    Icons.school,
-                    color: Colors.black87,
-                    size: 28,
-                  ),
+                  child: Icon(Icons.school, color: Colors.black87, size: 28),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -624,7 +648,7 @@ class _CalendarPageState extends State<CalendarPage> {
               ],
             ),
             const SizedBox(height: 24),
-            
+
             // Duration
             Container(
               padding: const EdgeInsets.all(16),
@@ -634,7 +658,11 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.access_time, color: Colors.blue.shade700, size: 24),
+                  Icon(
+                    Icons.access_time,
+                    color: Colors.blue.shade700,
+                    size: 24,
+                  ),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -662,7 +690,7 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Topic
             Container(
               padding: const EdgeInsets.all(16),
@@ -703,7 +731,7 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Notes
             Container(
               padding: const EdgeInsets.all(16),
@@ -716,7 +744,11 @@ class _CalendarPageState extends State<CalendarPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.notes, color: Colors.orange.shade700, size: 24),
+                      Icon(
+                        Icons.notes,
+                        color: Colors.orange.shade700,
+                        size: 24,
+                      ),
                       const SizedBox(width: 12),
                       const Text(
                         'Study Notes',
@@ -741,14 +773,14 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // Close Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -759,6 +791,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
               ),

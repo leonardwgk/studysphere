@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/auth/services/auth_service.dart';
+import 'package:provider/provider.dart';
+import 'package:studysphere_app/features/profile/providers/settings_view_model.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => SettingsViewModel(),
+      child: const _SettingsPageContent(),
+    );
+  }
+}
+
+class _SettingsPageContent extends StatelessWidget {
+  const _SettingsPageContent();
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +27,9 @@ class SettingsPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
           onPressed: () {
-            Navigator.pop(context); // Fungsi untuk kembali ke halaman sebelumnya
+            Navigator.pop(
+              context,
+            ); // Fungsi untuk kembali ke halaman sebelumnya
           },
         ),
         title: const Text(
@@ -96,20 +111,15 @@ class SettingsPage extends StatelessWidget {
                 //     // Aksi hapus akun
                 //   },
                 // ),
-                _buildSettingsItem(
-                  icon: Icons.logout, // Icon logout panah keluar
-                  iconColor: Colors.blue,
-                  title: 'Logout',
-                  showDivider: false,
-                  onTap: () async {
-                    // Panggil fungsi logout dan kembali ke login
-                    final authService = AuthService();
-                    await authService.signOut();
-                    // Biasanya auth stream akan otomatis mengarahkan ke login page
-                    // Tapi kita juga bisa pop semua route
-                    if (context.mounted) {
-                      Navigator.of(context).popUntil((route) => route.isFirst);
-                    }
+                Consumer<SettingsViewModel>(
+                  builder: (context, viewModel, child) {
+                    return _buildSettingsItem(
+                      icon: Icons.logout, // Icon logout panah keluar
+                      iconColor: Colors.blue,
+                      title: 'Logout',
+                      showDivider: false,
+                      onTap: () => viewModel.logout(context),
+                    );
                   },
                 ),
               ]),
@@ -127,9 +137,7 @@ class SettingsPage extends StatelessWidget {
         color: Colors.grey.shade100, // Warna background group
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 
@@ -152,7 +160,7 @@ class SettingsPage extends StatelessWidget {
                 // Icon di kiri
                 Icon(icon, color: iconColor, size: 26),
                 const SizedBox(width: 15),
-                
+
                 // Teks Judul
                 Expanded(
                   child: Text(
@@ -164,15 +172,24 @@ class SettingsPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 // Panah kanan
-                const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.grey,
+                  size: 16,
+                ),
               ],
             ),
           ),
           // Garis pembatas (Divider) kecuali item terakhir
           if (showDivider)
-            const Divider(height: 1, indent: 55, endIndent: 15, color: Colors.black12),
+            const Divider(
+              height: 1,
+              indent: 55,
+              endIndent: 15,
+              color: Colors.black12,
+            ),
         ],
       ),
     );

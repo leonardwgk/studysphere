@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:studysphere_app/features/home/pages/study_timer_page.dart';
 
 class StartStudyButton extends StatelessWidget {
   const StartStudyButton({super.key});
@@ -10,7 +11,9 @@ class StartStudyButton extends StatelessWidget {
       height: 60,
       child: ElevatedButton(
         onPressed: () {
-          // Aksi ketika tombol ditekan
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const StudyTimerPage()),
+          );
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.blue, // Warna biru
