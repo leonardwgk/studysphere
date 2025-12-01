@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/home/pages/study_timer_page.dart';
+import 'package:studysphere_app/features/study_tracker/pages/pomodoro_page.dart';
 
 class StartStudyButton extends StatelessWidget {
   const StartStudyButton({super.key});
@@ -11,8 +11,18 @@ class StartStudyButton extends StatelessWidget {
       height: 60,
       child: ElevatedButton(
         onPressed: () {
+          // Aksi ketika tombol ditekan
+          // Navigator.push(
+          //   context, 
+          //   MaterialPageRoute(builder:(context) => PomodoroPage()),
+          // )
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const StudyTimerPage()),
+            MaterialPageRoute(
+              // builder adalah fungsi yang mengembalikan widget 
+               builder: (BuildContext context) {
+                return const PomodoroPage();
+              },
+            ),
           );
         },
         style: ElevatedButton.styleFrom(
