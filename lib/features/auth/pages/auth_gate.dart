@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:studysphere_app/features/auth/pages/login_page.dart';
 import 'package:studysphere_app/features/home/pages/home_gate.dart';
+import 'package:provider/provider.dart';
+import 'package:studysphere_app/features/auth/providers/user_provider.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -21,7 +23,14 @@ class AuthGate extends StatelessWidget {
 
         // 2. If we have a user -> Go to Home
         if (snapshot.hasData) {
-          return const HomePage();
+          // Fetch user data when logged in
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Provider.of<UserProvider>(
+              context,
+              listen: false,
+            ).fetchUser(snapshot.data!.uid);
+          });
+          return const HomeGate();
         }
 
         // 3. If no user -> Go to Login

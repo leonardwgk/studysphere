@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:studysphere_app/features/auth/providers/user_provider.dart';
 
 class HeaderSection extends StatelessWidget {
   const HeaderSection({super.key});
@@ -21,15 +23,28 @@ class HeaderSection extends StatelessWidget {
             const SizedBox(width: 15),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const <Widget>[
-                Text(
+              children: <Widget>[
+                const Text(
                   'Hello,',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
-                Text(
-                  // Ambil data dari Firebase nanti
-                  'John Doe',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Consumer<UserProvider>(
+                  builder: (context, userProvider, child) {
+                    if (userProvider.isLoading) {
+                      return const SizedBox(
+                        width: 100,
+                        height: 20,
+                        child: LinearProgressIndicator(),
+                      );
+                    }
+                    return Text(
+                      userProvider.username ?? 'User',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

@@ -31,11 +31,6 @@ class ProfileHeader extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            const Text(
-              '@this_is_johndoe',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-            const SizedBox(height: 8),
             Row(
               children: [
                 _buildStatText('12', 'Following'),

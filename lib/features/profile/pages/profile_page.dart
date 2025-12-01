@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:studysphere_app/features/profile/widgets/profile_header.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -13,8 +14,8 @@ class ProfilePage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. Profile Header (Avatar & Info)
-              // const ProfileHeader(),
-              // const SizedBox(height: 20),
+              const ProfileHeader(),
+              const SizedBox(height: 20),
 
               // 2. Action Buttons (Edit, Share, Add)
               // const ActionButtons(),
@@ -34,6 +35,3 @@ class ProfilePage extends StatelessWidget {
     );
   }
 }
-
-
-

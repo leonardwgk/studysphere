@@ -1,109 +1,103 @@
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/auth/services/auth_service.dart';
+import 'package:provider/provider.dart';
 import 'package:studysphere_app/features/calender/pages/calendar_page.dart';
 import 'package:studysphere_app/features/friend/pages/friend_page.dart';
 import 'package:studysphere_app/features/home/data/tabitems.dart';
 import 'package:studysphere_app/features/home/pages/home_page.dart';
+import 'package:studysphere_app/features/home/providers/home_view_model.dart';
 import 'package:studysphere_app/features/profile/pages/profile_page.dart';
 import 'package:studysphere_app/features/profile/widgets/app_bar.dart';
+import 'package:studysphere_app/features/home/services/pending_session_service.dart';
+import 'package:studysphere_app/features/home/pages/post_study_page.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomeGate extends StatelessWidget {
+  const HomeGate({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => HomeViewModel(),
+      child: const _HomeGateContent(),
+    );
+  }
 }
 
-class _HomePageState extends State<HomePage> {
-  int _currIdx = 0;
+class _HomeGateContent extends StatefulWidget {
+  const _HomeGateContent();
 
-  late final ScrollController _homeScrollController;
-  final GlobalKey<MainPageState> _mainPageKey = GlobalKey<MainPageState>();
+  @override
+  State<_HomeGateContent> createState() => _HomeGateContentState();
+}
 
+class _HomeGateContentState extends State<_HomeGateContent> {
   late final List<Widget> _pages;
-
-  void changeTab(int index) {
-    setState(() {
-      _currIdx = index;
-    });
-  }
 
   @override
   void initState() {
     super.initState();
-    _homeScrollController = ScrollController();
-
-    // Inisialisasi _pages di sini agar bisa meneruskan controller & key
+    final viewModel = Provider.of<HomeViewModel>(context, listen: false);
     _pages = [
       MainPage(
-        key: _mainPageKey,
-        scrollController: _homeScrollController,
-        onNavigateToTab: changeTab,
+        key: viewModel.mainPageKey,
+        scrollController: viewModel.homeScrollController,
+        onNavigateToTab: viewModel.setIndex,
       ),
       const FriendPage(),
       const CalendarPage(),
       const ProfilePage(),
     ];
+
+    _checkPendingSession();
   }
 
-  @override
-  void dispose() {
-    _homeScrollController.dispose(); // Jangan lupa dispose controller
-    super.dispose();
+  Future<void> _checkPendingSession() async {
+    final session = await PendingSessionService().getSession();
+    if (session != null && mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => PostStudyPage(
+            totalFocusTime: session['focusTime']!,
+            totalBreakTime: session['breakTime']!,
+          ),
+        ),
+      );
+    }
   }
 
-  late final List<TabItem> _tabs = const [
+  final List<TabItem> _tabs = const [
     TabItem('Home', Icons.home),
     TabItem('Groups', Icons.people),
     TabItem('Calendar', Icons.calendar_month_outlined),
     TabItem('You', Icons.person_2_outlined),
   ];
 
-  PreferredSizeWidget? _buildAppBar(AuthService authService) {
-    // 2. PROFILE: AppBar Custom (Putih, Tulisan Besar)
-    if (_currIdx == 3) {
+  PreferredSizeWidget? _buildAppBar(int currIdx) {
+    if (currIdx == 3) {
       return PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: ProfileAppBar(),
       );
     }
-
-    // 3. DEFAULT
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final AuthService authService = AuthService();
+    final viewModel = Provider.of<HomeViewModel>(context);
+    final currIdx = viewModel.currIdx;
+
     return Scaffold(
-      appBar: _buildAppBar(authService),
-
-      body: IndexedStack(index: _currIdx, children: _pages),
-
+      appBar: _buildAppBar(currIdx),
+      body: IndexedStack(index: currIdx, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        currentIndex: _currIdx,
-        onTap: (idx) {
-          if (idx == _currIdx && idx == 0) {
-            _homeScrollController.animateTo(
-              0.0,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-            _mainPageKey.currentState?.refreshFeed;
-          } else {
-            setState(() {
-              _currIdx = idx;
-            });
-          }
-        },
+        currentIndex: currIdx,
+        onTap: viewModel.onBottomNavTap,
         items: List.generate(_tabs.length, (i) {
           final t = _tabs[i];
           final baseIcon = Icon(t.icon);
           return BottomNavigationBarItem(
-            icon: i == 0
-                ? Badge(child: baseIcon)
-                : baseIcon, // keep Badge on first tab
+            icon: i == 0 ? Badge(child: baseIcon) : baseIcon,
             label: t.label,
           );
         }),
