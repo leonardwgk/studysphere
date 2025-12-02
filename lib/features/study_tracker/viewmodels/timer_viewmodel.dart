@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class TimerViewModel extends ChangeNotifier {
   // --- STATE ---
   static const int _defaultDuration = 60 * 60; // Misal 1 jam (sesuai gambar 53:21)
-  int _remainingSeconds = 3201; // Contoh: 53 menit 21 detik
+  int _remainingSeconds = 10; // Contoh: 53 menit 21 detik
   int get totalDuration => _defaultDuration; // Untuk progress bar
 
   Timer? _timer;
