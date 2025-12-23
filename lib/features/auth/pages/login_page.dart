@@ -23,6 +23,15 @@ class _LoginPageState extends State<LoginPage> {
   String? _passwordErrorText;
 
   void _login() async {
+    // 1. Validasi awal
+    if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+      setState(() {
+        _emailErrorText = _emailController.text.trim().isEmpty ? "Email wajib diisi" : null;
+        _passwordErrorText = _passwordController.text.isEmpty ? "Password wajib diisi" : null;
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _emailErrorText = null;
@@ -30,12 +39,11 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // Panggil service
       await _authService.signInWithEmailAndPassword(
-        email: _emailController.text,
+        email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      // AuthGate otomatis pindah halaman jika berhasil login
+      // AuthGate akan mendeteksi perubahan dan memindahkan halaman secara otomatis
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       final errors = mapFirebaseAuthError(e);
@@ -44,19 +52,14 @@ class _LoginPageState extends State<LoginPage> {
         _emailErrorText = errors.email;
         _passwordErrorText = errors.password;
       });
-      // Tampilkan error
 
       if (errors.global != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(errors.global!)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errors.global!)),
+        );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

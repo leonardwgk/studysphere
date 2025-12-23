@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/home/pages/pomodoro_page.dart';
+import 'package:studysphere_app/features/study_tracker/pages/pomodoro_page.dart';
 
 class StartStudyButton extends StatelessWidget {
   const StartStudyButton({super.key});

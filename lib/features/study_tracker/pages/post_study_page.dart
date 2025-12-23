@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/home/services/pending_session_service.dart';
+import '../services/study_service.dart'; // Import service baru Anda
 
 class PostStudyPage extends StatefulWidget {
   final int totalFocusTime;
@@ -19,6 +19,7 @@ class _PostStudyPageState extends State<PostStudyPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  bool _isLoading = false; // Loading state untuk UI
 
   @override
   void dispose() {
@@ -35,40 +36,61 @@ class _PostStudyPageState extends State<PostStudyPage> {
 
   void _handlePost() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement Firestore posting
+      setState(() => _isLoading = true);
 
-      // Clear pending session
-      await PendingSessionService().clearSession();
+      try {
+        // Panggil StudyService untuk simpan ke 3 koleksi sekaligus (Transaction/Batch)
+        // Menggunakan judul sebagai 'label' mata pelajaran sesuai Data Design Anda
+        await StudyService().saveCompleteSession(
+          focusTime: widget.totalFocusTime,
+          breakTime: widget.totalBreakTime,
+          label: _titleController.text.trim(),
+        );
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Posting study session... (Placeholder)')),
-      );
-      // For now, just pop back to home
-      Navigator.of(context).popUntil((route) => route.isFirst);
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Session saved and posted!')),
+        );
+
+        // Kembali ke Home setelah sukses
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving session: $e')),
+        );
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, // Prevent back navigation
+      canPop: false,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Share Session'),
-          automaticallyImplyLeading: false, // Hide back button
+          automaticallyImplyLeading: false,
           actions: [
-            TextButton(
-              onPressed: _handlePost,
-              child: const Text(
-                'Post',
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+            _isLoading 
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                )
+              : TextButton(
+                  onPressed: _handlePost,
+                  child: const Text(
+                    'Post',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
-              ),
-            ),
           ],
         ),
         body: SingleChildScrollView(
@@ -78,7 +100,7 @@ class _PostStudyPageState extends State<PostStudyPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Stats Section
+                // Stats Section (Tetap sama)
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -105,68 +127,28 @@ class _PostStudyPageState extends State<PostStudyPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // Title Input
+                // Title Input (Wajib)
                 TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(
-                    labelText: 'Title',
-                    hintText: 'What did you study?',
+                    labelText: 'Subject/Label',
+                    hintText: 'e.g. Mathematics, Science',
                     border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.title),
+                    prefixIcon: Icon(Icons.label),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a title';
-                    }
-                    return null;
-                  },
+                  validator: (value) => value == null || value.isEmpty ? 'Label is required' : null,
                 ),
                 const SizedBox(height: 16),
 
-                // Description Input
+                // Description Input (Opsional)
                 TextFormField(
                   controller: _descriptionController,
                   decoration: const InputDecoration(
                     labelText: 'Description (Optional)',
-                    hintText: 'Share your thoughts or progress...',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.description),
-                    alignLabelWithHint: true,
                   ),
-                  maxLines: 4,
-                ),
-                const SizedBox(height: 16),
-
-                // Image Input Placeholder
-                InkWell(
-                  onTap: () {
-                    // TODO: Implement Image Picker
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Image Picker not implemented yet'),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    height: 150,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey[50],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
-                        SizedBox(height: 8),
-                        Text(
-                          'Add Photo (Optional)',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
+                  maxLines: 3,
                 ),
               ],
             ),
@@ -176,20 +158,12 @@ class _PostStudyPageState extends State<PostStudyPage> {
     );
   }
 
-  Widget _buildStatItem(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
     return Column(
       children: [
         Icon(icon, color: color, size: 30),
         const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
       ],
     );

@@ -38,7 +38,7 @@ class HeaderSection extends StatelessWidget {
                       );
                     }
                     return Text(
-                      userProvider.username ?? 'User',
+                      userProvider.user?.username ?? 'User',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
