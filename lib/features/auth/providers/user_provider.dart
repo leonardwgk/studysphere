@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:studysphere_app/features/auth/data/models/user_model.dart';
 import 'package:studysphere_app/features/auth/services/auth_service.dart';
