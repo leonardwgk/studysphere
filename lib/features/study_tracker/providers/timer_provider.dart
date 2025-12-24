@@ -17,6 +17,19 @@ class TimerProvider with ChangeNotifier {
   int _totalFocusElapsed = 0;
   int _totalBreakElapsed = 0;
 
+  // variabel subjek dan daftar kategori
+  String _subject = "Matematika"; 
+  final List<String> _categories = [
+    "Matematika",
+    "Fisika",
+    "Biologi",
+    "Kimia",
+    "Sejarah",
+    "Bahasa Inggris",
+    "Bahasa Indonesia",
+    "Lainnya"
+  ];
+
   // Getters
   int get focusMinutes => _focusMinutes;
   int get shortBreakMinutes => _shortBreakMinutes;
@@ -24,7 +37,13 @@ class TimerProvider with ChangeNotifier {
   SessionType get sessionType => _sessionType;
   int get totalFocusElapsed => _totalFocusElapsed;
   int get totalBreakElapsed => _totalBreakElapsed;
-  String get subject => "Matematika"; // Bisa dibuat dinamis nanti
+  String get subject => _subject;
+  List<String> get categories => _categories;
+
+  void setSubject(String newSubject) {
+    _subject = newSubject;
+    notifyListeners();
+  }
 
   double get progress {
     int total = _sessionType == SessionType.focus 

@@ -37,7 +37,7 @@ class _PomodoroView extends StatelessWidget {
               children: [
                 _buildHeader(context, tp),
                 const SizedBox(height: 20),
-                _buildSubjectTitle(tp),
+                _buildSubjectTitle(context, tp),
                 const Spacer(),
                 _buildTimerCircle(tp, themeColor, statusText),
                 const Spacer(),
@@ -83,17 +83,69 @@ class _PomodoroView extends StatelessWidget {
     );
   }
 
-  Widget _buildSubjectTitle(TimerProvider tp) {
-    return Column(
-      children: [
-        const Text("#Individually Studying", 
-            style: TextStyle(color: Colors.grey, fontSize: 14)),
-        const SizedBox(height: 8),
-        Text(tp.subject, 
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-      ],
+  Widget _buildSubjectTitle(BuildContext context, TimerProvider tp) {
+    return GestureDetector(
+      onTap: () => _showSubjectPicker(context, tp), // Klik untuk ganti
+      child: Column(
+        children: [
+          const Text("#Individually Studying", 
+              style: TextStyle(color: Colors.grey, fontSize: 14)),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(tp.subject, 
+                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+              const SizedBox(width: 8),
+              const Icon(Icons.edit_outlined, size: 20, color: Colors.grey),
+            ],
+          ),
+        ],
+      ),
     );
   }
+
+  void _showSubjectPicker(BuildContext context, TimerProvider tp) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+    ),
+    builder: (ctx) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Pilih Mata Pelajaran", 
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            // List daftar kategori dari Provider
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: tp.categories.length,
+                itemBuilder: (context, index) {
+                  final cat = tp.categories[index];
+                  return ListTile(
+                    title: Text(cat),
+                    trailing: tp.subject == cat 
+                        ? const Icon(Icons.check_circle, color: Colors.black) 
+                        : null,
+                    onTap: () {
+                      tp.setSubject(cat);
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildTimerCircle(TimerProvider tp, Color color, String status) {
     return Stack(
@@ -171,7 +223,8 @@ class _PomodoroView extends StatelessWidget {
                 context, 
                 MaterialPageRoute(builder: (_) => PostStudyPage(
                   totalFocusTime: focus, 
-                  totalBreakTime: breakTime
+                  totalBreakTime: breakTime,
+                  initialLabel: tp.subject,
                 ))
               );
             },
