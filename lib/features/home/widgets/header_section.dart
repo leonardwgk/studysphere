@@ -9,49 +9,57 @@ class HeaderSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        // Avatar dan Teks Sapaan
+      children: [
         Row(
           children: [
-            // Avatar (Gunakan CircleAvatar)
-            const CircleAvatar(
-              radius: 25,
-              // backgroundImage: NetworkImage(
-              //   "https://via.placeholder.com/150",
-              // ), // Ganti dengan URL gambar
+            Consumer<UserProvider>(
+              builder: (context, userProvider, child) {
+                final photoUrl = userProvider.user?.photoUrl;
+                return CircleAvatar(
+                  radius: 25,
+                  backgroundColor: Colors.grey[200],
+                  backgroundImage: (photoUrl != null && photoUrl.isNotEmpty) ? NetworkImage(photoUrl) : null,
+                  child: (photoUrl == null || photoUrl.isEmpty) ? const Icon(Icons.person, color: Colors.grey) : null,
+                );
+              },
             ),
             const SizedBox(width: 15),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
+              children: [
                 const Text(
-                  'Hello,',
+                  'Hello, ',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 Consumer<UserProvider>(
                   builder: (context, userProvider, child) {
-                    if (userProvider.isLoading) {
+                    if(userProvider.isLoading) {
                       return const SizedBox(
                         width: 100,
-                        height: 20,
+                        height: 4, // Lebih tipis agar rapi
                         child: LinearProgressIndicator(),
                       );
                     }
                     return Text(
-                      userProvider.username ?? 'User',
+                      userProvider.user?.username ?? 'User',
                       style: const TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.bold
                       ),
                     );
                   },
-                ),
+                )
               ],
-            ),
+            )
           ],
         ),
-        // Ikon Notifikasi (Bell)
-        const Icon(Icons.notifications_none, size: 30),
+        IconButton(
+          onPressed: () {
+            // Logika notifikasi nanti
+
+
+          }, icon: const Icon(Icons.notifications_none, size: 30)
+        )
       ],
     );
   }

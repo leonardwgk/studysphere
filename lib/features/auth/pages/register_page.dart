@@ -28,10 +28,6 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _passwordErrorText;
   String? _confirmPasswordErrorText;
 
-  void popPage() {
-    Navigator.pop(context);
-  }
-
   // fungsi register
   void _register() async {
     // Set loading + clear
@@ -89,8 +85,16 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (mounted) {
+        // BERI TAHU USER KALAU SUKSES
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Registrasi Berhasil! Silakan login dengan akun Anda."),
+            backgroundColor: Colors.green,
+          ),
+        );
+
         // Kembali ke halaman login
-        popPage();
+        Navigator.pop(context);
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -192,7 +196,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       hintText: "Konfirmasi Password",
                       icon: Icons.lock_outlined,
                       errorText:
-                          _passwordErrorText, // Ganti dengan variabel error password
+                          _confirmPasswordErrorText, // Ganti dengan variabel error password
                     ),
                     obscureText: true,
                   ),

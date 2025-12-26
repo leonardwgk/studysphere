@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:studysphere_app/features/profile/providers/settings_view_model.dart';
+import 'package:studysphere_app/features/profile/providers/settings_providers.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
