@@ -19,13 +19,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => UserProvider())   // Passing user state untuk data sharing antar widgets
+        ChangeNotifierProvider(
+          create: (_) => UserProvider(),
+        ), // Passing user state untuk data sharing antar widgets
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'StudySphere',
         theme: ThemeData(
           useMaterial3: true,
+          scaffoldBackgroundColor: const Color(0xFFF5F7F9),
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.blue,
             brightness: Brightness.light,

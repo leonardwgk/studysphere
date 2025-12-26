@@ -14,11 +14,17 @@ class UserModel {
   final DateTime createdAt;
 
   UserModel({
-    required this.uid, required this.email, required this.username,
-    this.photoUrl = '', this.searchKeywords = const [],
-    this.totalFocusTime = 0, this.totalBreakTime = 0,
-    this.followingCount = 0, this.followersCount = 0,
-    this.badges = const [], required this.createdAt,
+    required this.uid,
+    required this.email,
+    required this.username,
+    this.photoUrl = '',
+    this.searchKeywords = const [],
+    this.totalFocusTime = 0,
+    this.totalBreakTime = 0,
+    this.followingCount = 0,
+    this.followersCount = 0,
+    this.badges = const [],
+    required this.createdAt,
   });
 
   // Untuk mengubah data dari Firestore (Map) ke Object Dart

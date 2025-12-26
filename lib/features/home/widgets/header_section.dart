@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:studysphere_app/features/auth/providers/user_provider.dart';
+import 'package:studysphere_app/shared/widgets/custom_avatar.dart';
 
 class HeaderSection extends StatelessWidget {
   const HeaderSection({super.key});
@@ -14,12 +15,10 @@ class HeaderSection extends StatelessWidget {
           children: [
             Consumer<UserProvider>(
               builder: (context, userProvider, child) {
-                final photoUrl = userProvider.user?.photoUrl;
-                return CircleAvatar(
+                return CustomAvatar(
+                  photoUrl: userProvider.user?.photoUrl,
+                  name: userProvider.user?.username ?? 'U',
                   radius: 25,
-                  backgroundColor: Colors.grey[200],
-                  backgroundImage: (photoUrl != null && photoUrl.isNotEmpty) ? NetworkImage(photoUrl) : null,
-                  child: (photoUrl == null || photoUrl.isEmpty) ? const Icon(Icons.person, color: Colors.grey) : null,
                 );
               },
             ),
@@ -33,7 +32,7 @@ class HeaderSection extends StatelessWidget {
                 ),
                 Consumer<UserProvider>(
                   builder: (context, userProvider, child) {
-                    if(userProvider.isLoading) {
+                    if (userProvider.isLoading) {
                       return const SizedBox(
                         width: 100,
                         height: 4, // Lebih tipis agar rapi
@@ -44,22 +43,21 @@ class HeaderSection extends StatelessWidget {
                       userProvider.user?.username ?? 'User',
                       style: const TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.bold
+                        fontWeight: FontWeight.bold,
                       ),
                     );
                   },
-                )
+                ),
               ],
-            )
+            ),
           ],
         ),
         IconButton(
           onPressed: () {
             // Logika notifikasi nanti
-
-
-          }, icon: const Icon(Icons.notifications_none, size: 30)
-        )
+          },
+          icon: const Icon(Icons.notifications_none, size: 30),
+        ),
       ],
     );
   }

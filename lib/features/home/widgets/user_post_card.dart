@@ -1,79 +1,94 @@
 import 'package:flutter/material.dart';
+import 'package:studysphere_app/features/home/data/models/post_model.dart';
+import 'package:studysphere_app/shared/widgets/custom_avatar.dart';
+import 'package:intl/intl.dart'; // for DateFormat
 
-class UserPostCard extends StatelessWidget {
-  final String name;
-  final String handle;
-  final String caption;
-  final String imageUrl;
-  final String duration;
-  final String focusTime;
-  final String breakTime;
+class UserPostCard extends StatefulWidget {
+  final PostModel post; // Pakai Model langsung (DTO)
 
-  const UserPostCard({
-    required this.name,
-    required this.handle,
-    required this.caption,
-    required this.imageUrl,
-    required this.duration,
-    required this.focusTime,
-    required this.breakTime,
-    super.key,
-  });
+  const UserPostCard({required this.post, super.key});
+
+  @override
+  State<UserPostCard> createState() => _UserPostCardState();
+}
+
+class _UserPostCardState extends State<UserPostCard> {
+  bool _isExpanded = false; // State untuk mengontrol teks
+
+  // Helper: Mengubah detik (int) ke format HH:mm:ss
+  String _formatDuration(int totalSeconds) {
+    final duration = Duration(seconds: totalSeconds);
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return hours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
+  }
+
+  String _formatTimestamp(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inSeconds < 60) {
+      return '${difference.inSeconds}s';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h';
+    } else if (difference.inDays < 30) {
+      return '${difference.inDays}d';
+    } else if (now.year == dateTime.year) {
+      // Format: 01 Dec
+      return DateFormat('dd MMM').format(dateTime);
+    } else {
+      // Format: 10 Nov 24
+      return DateFormat('dd MMM yy').format(dateTime);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Hitung total durasi
+    final totalDuration = widget.post.focusTime + widget.post.breakTime;
+
     return Container(
-      padding: const EdgeInsets.only(bottom: 10.0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        color: Colors.white, // Warna kartu
+        borderRadius: BorderRadius.circular(16), // Sudut melengkung
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.05), // Bayangan sangat tipis
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
+        children: [
           // Header Post
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Row(
+              children: [
+                CustomAvatar(
+                  photoUrl: widget.post.userPhotoUrl,
+                  name: widget.post.username,
+                  radius: 20,
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Avatar/Initial
-                    Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.deepPurple.shade50,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        name[0],
-                        style: TextStyle(
-                          color: Colors.deepPurple.shade600,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
+                    Row(
+                      // Gunakan Row untuk nama dan tanggal
+                      children: [
                         Text(
-                          name,
+                          widget.post.username,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
+                        const SizedBox(width: 5),
                         Text(
-                          handle,
+                          "• ${_formatTimestamp(widget.post.createdAt)}", // HASIL LOGIKA TANGGAL
                           style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 12,
@@ -81,70 +96,100 @@ class UserPostCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    Text(
+                      'Studying: ' + widget.post.label,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
                   ],
                 ),
-                const Icon(Icons.more_vert, color: Colors.grey),
               ],
             ),
           ),
 
           // Konten Gambar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: 250,
-                // Tambahkan errorBuilder untuk menampilkan teks jika gambar gagal dimuat
-                errorBuilder: (context, error, stackTrace) => Container(
+          if (widget.post.imageUrl.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(
+                  widget.post.imageUrl,
                   height: 250,
-                  color: Colors.grey.shade200,
-                  alignment: Alignment.center,
-                  child: const Text('Gagal Memuat Gambar'),
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  // Tetap gunakan errorBuilder untuk jaga-jaga jika URL-nya corrupt
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),
               ),
             ),
-          ),
 
-          // Caption dan Metrik Waktu
+          // Jika ada gambar, kasih jarak 10. Jika tidak ada, kasih jarak 5 saja biar rapat.
+          SizedBox(height: widget.post.imageUrl.isNotEmpty ? 10 : 5),
+
+          // Caption & Metrics
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              16,
-              10,
-              16,
-              16,
-            ), // Padding bawah disesuaikan
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Caption
                 Text(
-                  caption,
+                  widget.post.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+
+                const SizedBox(height: 8),
+
+                // DESCRIPTION dengan fitur Read More
+                if (widget.post.description.isNotEmpty)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.post.description,
+                        maxLines: _isExpanded
+                            ? null
+                            : 3, // Tampilkan semua jika ekspand
+                        overflow: _isExpanded
+                            ? TextOverflow.visible
+                            : TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.black87),
+                      ),
+                      // Tampilkan tombol hanya jika teks cukup panjang (> 100 karakter misalnya)
+                      if (widget.post.description.length > 200)
+                        InkWell(
+                          onTap: () =>
+                              setState(() => _isExpanded = !_isExpanded),
+                          child: Text(
+                            _isExpanded ? "Show Less" : "Read More",
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+
                 const SizedBox(height: 10),
 
-                // Metrik Waktu (2 Baris)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Duration
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Duration',
-                          style: TextStyle(color: Colors.black54, fontSize: 12),
+                          'Total Duration',
+                          style: TextStyle(fontSize: 12),
                         ),
                         Text(
-                          duration,
+                          _formatDuration(totalDuration),
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -152,18 +197,14 @@ class UserPostCard extends StatelessWidget {
                         ),
                       ],
                     ),
-
-                    // Focus Time & Break Time
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'Focus Time: $focusTime',
-                          style: const TextStyle(fontSize: 14),
+                          'Focus: ${_formatDuration(widget.post.focusTime)}',
                         ),
                         Text(
-                          'Break Time: $breakTime',
-                          style: const TextStyle(fontSize: 14),
+                          'Break: ${_formatDuration(widget.post.breakTime)}',
                         ),
                       ],
                     ),
