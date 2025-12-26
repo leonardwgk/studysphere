@@ -37,6 +37,7 @@ class _PostStudyPageState extends State<PostStudyPage> {
     "Kimia",
     "Sejarah",
     "Bahasa Inggris",
+    "Bahasa Indonesia",
     "Lainnya",
   ];
 
