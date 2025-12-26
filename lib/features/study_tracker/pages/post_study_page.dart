@@ -31,7 +31,13 @@ class _PostStudyPageState extends State<PostStudyPage> {
 
   // Daftar kategori tetap untuk menjaga kualitas data (ML-Ready)
   final List<String> _categories = [
-    "Matematika", "Fisika", "Biologi", "Kimia", "Sejarah", "Bahasa Inggris", "Lainnya"
+    "Matematika",
+    "Fisika",
+    "Biologi",
+    "Kimia",
+    "Sejarah",
+    "Bahasa Inggris",
+    "Lainnya",
   ];
 
   @override
@@ -59,13 +65,18 @@ class _PostStudyPageState extends State<PostStudyPage> {
       setState(() => _isLoading = true);
 
       try {
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        final userProvider = Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ); // UserProvider can't be changed in this context
         final studyService = StudyService();
         String? uploadedImageUrl;
 
         // 1. Upload & Kompres Gambar ke Storage (jika ada)
         if (_selectedImage != null) {
-          uploadedImageUrl = await studyService.uploadStudyImage(_selectedImage!);
+          uploadedImageUrl = await studyService.uploadStudyImage(
+            _selectedImage!,
+          );
           if (uploadedImageUrl == null) {
             throw Exception("Gagal mengunggah gambar. Periksa koneksi Anda.");
           }
@@ -76,7 +87,7 @@ class _PostStudyPageState extends State<PostStudyPage> {
           user: userProvider.user!,
           focusTime: widget.totalFocusTime,
           breakTime: widget.totalBreakTime,
-          label: _selectedLabel,         // Data Kategorikal (ML)
+          label: _selectedLabel, // Data Kategorikal (ML)
           title: _titleController.text.trim(), // Data Kreatif (UI)
           description: _descriptionController.text.trim(),
           imageUrl: uploadedImageUrl,
@@ -125,14 +136,19 @@ class _PostStudyPageState extends State<PostStudyPage> {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          title: const Text('Share Session', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text(
+            'Share Session',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           centerTitle: true,
           automaticallyImplyLeading: false,
           actions: [
             _isLoading
                 ? const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   )
                 : TextButton(
                     onPressed: _handlePost,
@@ -165,8 +181,18 @@ class _PostStudyPageState extends State<PostStudyPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildStatItem('Focus Time', _formatTime(widget.totalFocusTime), Icons.timer, Colors.blue),
-                      _buildStatItem('Break Time', _formatTime(widget.totalBreakTime), Icons.coffee, Colors.orange),
+                      _buildStatItem(
+                        'Focus Time',
+                        _formatTime(widget.totalFocusTime),
+                        Icons.timer,
+                        Colors.blue,
+                      ),
+                      _buildStatItem(
+                        'Break Time',
+                        _formatTime(widget.totalBreakTime),
+                        Icons.coffee,
+                        Colors.orange,
+                      ),
                     ],
                   ),
                 ),
@@ -181,18 +207,31 @@ class _PostStudyPageState extends State<PostStudyPage> {
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid),
+                      border: Border.all(
+                        color: Colors.grey[300]!,
+                        style: BorderStyle.solid,
+                      ),
                       image: _selectedImage != null
-                          ? DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover)
+                          ? DecorationImage(
+                              image: FileImage(_selectedImage!),
+                              fit: BoxFit.cover,
+                            )
                           : null,
                     ),
                     child: _selectedImage == null
                         ? const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_a_photo_outlined, size: 40, color: Colors.grey),
+                              Icon(
+                                Icons.add_a_photo_outlined,
+                                size: 40,
+                                color: Colors.grey,
+                              ),
                               SizedBox(height: 8),
-                              Text("Add a photo to your post", style: TextStyle(color: Colors.grey)),
+                              Text(
+                                "Add a photo to your post",
+                                style: TextStyle(color: Colors.grey),
+                              ),
                             ],
                           )
                         : null,
@@ -201,48 +240,76 @@ class _PostStudyPageState extends State<PostStudyPage> {
                 const SizedBox(height: 24),
 
                 // --- CATEGORY DROPDOWN ---
-                const Text("Subject Category", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Text(
+                  "Subject Category",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   value: _selectedLabel,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.grey[50],
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                     prefixIcon: const Icon(Icons.category_outlined),
                   ),
-                  items: _categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
+                  items: _categories
+                      .map(
+                        (cat) => DropdownMenuItem(value: cat, child: Text(cat)),
+                      )
+                      .toList(),
                   onChanged: (val) => setState(() => _selectedLabel = val!),
                 ),
                 const SizedBox(height: 20),
 
                 // --- TITLE INPUT ---
-                const Text("Session Title", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Text(
+                  "Session Title",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _titleController,
+                  maxLength: 50, // Batasi judul maksimal 50 karakter
                   decoration: InputDecoration(
+                    counterText:
+                        "", // Sembunyikan angka counter jika ingin tampilan clean
                     hintText: 'e.g. Mastering Calculus Basics',
                     filled: true,
                     fillColor: Colors.grey[50],
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                     prefixIcon: const Icon(Icons.title_outlined),
                   ),
-                  validator: (val) => val == null || val.isEmpty ? 'Title is required' : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? 'Title is required' : null,
                 ),
                 const SizedBox(height: 20),
 
                 // --- DESCRIPTION INPUT ---
-                const Text("Description", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Text(
+                  "Description",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _descriptionController,
-                  maxLines: 4,
+                  maxLength: 600, // Batasi deskripsi maksimal 600 karakter
+                  maxLines: null, // Biarkan mengembang ke bawah
+                  keyboardType: TextInputType.multiline,
                   decoration: InputDecoration(
                     hintText: 'Write about your study session...',
                     filled: true,
                     fillColor: Colors.grey[50],
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                     alignLabelWithHint: true,
                   ),
                 ),
@@ -255,12 +322,20 @@ class _PostStudyPageState extends State<PostStudyPage> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       children: [
         Icon(icon, color: color, size: 28),
         const SizedBox(height: 8),
-        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
       ],
     );

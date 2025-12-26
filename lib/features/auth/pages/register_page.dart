@@ -88,7 +88,9 @@ class _RegisterPageState extends State<RegisterPage> {
         // BERI TAHU USER KALAU SUKSES
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Registrasi Berhasil! Silakan login dengan akun Anda."),
+            content: Text(
+              "Registrasi Berhasil! Silakan login dengan akun Anda.",
+            ),
             backgroundColor: Colors.green,
           ),
         );

@@ -24,10 +24,15 @@ class _LoginPageState extends State<LoginPage> {
 
   void _login() async {
     // 1. Validasi awal
-    if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+    if (_emailController.text.trim().isEmpty ||
+        _passwordController.text.isEmpty) {
       setState(() {
-        _emailErrorText = _emailController.text.trim().isEmpty ? "Email wajib diisi" : null;
-        _passwordErrorText = _passwordController.text.isEmpty ? "Password wajib diisi" : null;
+        _emailErrorText = _emailController.text.trim().isEmpty
+            ? "Email wajib diisi"
+            : null;
+        _passwordErrorText = _passwordController.text.isEmpty
+            ? "Password wajib diisi"
+            : null;
       });
       return;
     }
@@ -54,9 +59,9 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       if (errors.global != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errors.global!)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errors.global!)));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

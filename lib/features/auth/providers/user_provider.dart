@@ -6,7 +6,7 @@ class UserProvider extends ChangeNotifier {
   UserModel? _user; //  Menyimpan data sesuai dengan model users
   bool _isLoading = false;
 
-  UserModel? get user=> _user;
+  UserModel? get user => _user;
   bool get isLoading => _isLoading;
 
   final AuthService _authService = AuthService(); // Penanganan data ke services
@@ -17,7 +17,7 @@ class UserProvider extends ChangeNotifier {
 
     try {
       final userData = await _authService.getUserData(uid);
-      if(userData != null) _user = userData;
+      if (userData != null) _user = userData;
     } catch (e) {
       debugPrint("Error fetching user: $e");
     } finally {
