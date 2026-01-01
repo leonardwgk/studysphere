@@ -1,12 +1,10 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-
-ValueNotifier<AuthService> authService = ValueNotifier(AuthService());
+import 'package:studysphere_app/features/auth/data/models/user_model.dart';
 
 class AuthService {
-  // instance Firebase Auth
+  // Instance Firebase
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -16,6 +14,7 @@ class AuthService {
   // Stream untuk cek status connected/login (Auth Gate)
   Stream<User?> get authstateChanges => _auth.authStateChanges();
 
+  // --- LOGIN ---
   Future<UserCredential> signInWithEmailAndPassword({
     required String email,
     required String password,
@@ -25,7 +24,7 @@ class AuthService {
       password: password,
     );
 
-    // SELF-HEALING: Check if Firestore data exists
+    // SELF-HEALING: Jika login Auth sukses tapi data Firestore hilang
     if (userCredential.user != null) {
       try {
         DocumentSnapshot userDoc = await _firestore
@@ -34,21 +33,19 @@ class AuthService {
             .get();
 
         if (!userDoc.exists) {
-          print(
-            "DEBUG: Ghost user detected! Creating missing Firestore data...",
-          );
+          print("DEBUG: Ghost user detected! Creating missing Firestore data...");
           await _createUserFirestoreData(userCredential.user!);
           print("DEBUG: Self-healing complete.");
         }
       } catch (e) {
         print("ERROR: Self-healing check failed: $e");
-        // Don't block login if this check fails, but user might have issues
       }
     }
 
     return userCredential;
   }
 
+  // --- REGISTER ---
   Future<UserCredential> registerWithEmailAndPassword({
     required String email,
     required String password,
@@ -60,33 +57,42 @@ class AuthService {
     );
 
     try {
-      // 2. Buat data di Firestore (Usernames + Users)
+      // 2. Buat data di Firestore (Usernames + Users) via Transaksi
       await _createUserFirestoreData(userCredential.user!);
     } catch (e) {
       print("DEBUG: Transaction failed with error: $e");
 
-      // Cleanup: If Firestore fails (network, etc.), delete the Auth user
-      // so we don't have a dangling user without Firestore data.
+      // Cleanup: Jika Firestore gagal, hapus akun Auth agar tidak 'nyangkut'
       try {
-        print(
-          "DEBUG: Attempting to delete Auth user due to Firestore failure...",
-        );
         await userCredential.user?.delete();
         print("DEBUG: Auth user deleted successfully.");
       } catch (deleteError) {
         print("ERROR: Failed to delete user from Auth: $deleteError");
       }
-      // Jika error lain (koneksi, permission), lempar keluar
-      rethrow;
+      rethrow; // Lempar error ke UI agar bisa ditampilkan snackbar
     }
 
-    // 4. Sign out agar tidak langsung login
+    // 3. Sign out agar user harus login ulang
     await _auth.signOut();
 
     return userCredential;
   }
 
-  // Helper: Create User Data (Extracted for Self-Healing)
+  // --- FETCH DATA (Jembatan ke Provider) ---
+  Future<UserModel?> getUserData(String uid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      if (doc.exists) {
+        return UserModel.fromFirestore(doc);
+      }
+      return null;
+    } catch (e) {
+      print("ERROR: Gagal mengambil data user: $e");
+      return null;
+    }
+  }
+
+  // --- HELPER: Create User Data & Transaction (Logic Inti) ---
   Future<void> _createUserFirestoreData(User user) async {
     String uid = user.uid;
     String email = user.email ?? "";
@@ -95,69 +101,62 @@ class AuthService {
     bool uniqueUsernameCreated = false;
     String finalUsername = "";
 
-    // 3. Loop cek keunikan
+    // Loop untuk memastikan username unik
     while (!uniqueUsernameCreated) {
       try {
-        print("DEBUG: Starting Firestore transaction for username check...");
         await _firestore.runTransaction((transaction) async {
-          // Percobaan pertama: Coba pakai username asli (misal: "johndoe")
-          // Percobaan kedua/loop: Pakai username + angka random (misal: "johndoe4921")
+          // Generate username kandidat (contoh: "henry" atau "henry4821")
           String candidateUsername = finalUsername.isEmpty
               ? baseUsername
               : "$baseUsername${_generateRandomDigits(4)}";
 
+          // Cek di koleksi 'usernames' (Satpam)
           DocumentReference usernameRef = _firestore
               .collection('usernames')
               .doc(candidateUsername);
 
-          DocumentSnapshot usernameSnapshot = await transaction.get(
-            usernameRef,
-          );
+          DocumentSnapshot usernameSnapshot = await transaction.get(usernameRef);
 
           if (usernameSnapshot.exists) {
-            // Jika sudah ada, lempar error local untuk memicu catch dan loop ulang
-            // Kita set finalUsername jadi string kosong dulu biar loop berikutnya generate angka
-            finalUsername = "taken";
+            finalUsername = "taken"; // Trigger untuk generate angka random
             throw Exception("Username taken");
           }
 
           // --- JIKA SUKSES (Username Unik) ---
 
-          // 1. Simpan di registry usernames
+          // 1. Kunci username di registry
           transaction.set(usernameRef, {
             'uid': uid,
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-          // 2. Simpan profile user
+          // 2. Simpan profile lengkap di 'users' (Sesuai Data Design)
           transaction.set(_firestore.collection('users').doc(uid), {
             'uid': uid,
             'email': email,
-            'username': candidateUsername, // Simpan username yg final
+            'username': candidateUsername,
             'photoUrl': '',
-            'currentStreak': 0,
-            'lastStudyDate': '',
+            'searchKeywords': [candidateUsername.toLowerCase()], 
             'totalFocusTime': 0,
             'totalBreakTime': 0,
-            'followers': [],
-            'following': [],
+            'followingCount': 0,
+            'followersCount': 0,
+            'badges': [],
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-          // Set flag keluar loop
           finalUsername = candidateUsername;
-        }, timeout: const Duration(seconds: 10)); // Add timeout
+        }, timeout: const Duration(seconds: 10));
 
         uniqueUsernameCreated = true;
         print("DEBUG: Username created: $finalUsername");
+
       } catch (e) {
         if (e.toString().contains("Username taken")) {
           print("DEBUG: Username taken, retrying with suffix...");
-          // Pastikan loop lanjut dan akan generate angka di putaran berikutnya
-          finalUsername = "retry";
+          finalUsername = "retry"; // Memicu generate angka random di loop berikutnya
           continue;
         }
-        // Rethrow other errors to be handled by caller
         rethrow;
       }
     }
@@ -166,12 +165,12 @@ class AuthService {
   // Helper: Generate Angka Random
   String _generateRandomDigits(int length) {
     var rng = Random();
-    // Menghasilkan angka seperti "4821"
     return List.generate(length, (_) => rng.nextInt(10)).join();
   }
 
+  // --- ACCOUNT MANAGEMENT ---
   Future<void> signOut() async {
-    return await _auth.signOut();
+    await _auth.signOut();
   }
 
   Future<void> resetPassword({required String email}) async {
@@ -182,14 +181,8 @@ class AuthService {
     await _currentUser!.updateDisplayName(username);
   }
 
-  Future<void> deleteAccount({
-    required String email,
-    required String password,
-  }) async {
-    AuthCredential credential = EmailAuthProvider.credential(
-      email: email,
-      password: password,
-    );
+  Future<void> deleteAccount({required String email, required String password}) async {
+    AuthCredential credential = EmailAuthProvider.credential(email: email, password: password);
     await _currentUser!.reauthenticateWithCredential(credential);
     await _currentUser!.delete();
     await _auth.signOut();
@@ -200,10 +193,7 @@ class AuthService {
     required String newPassword,
     required String email,
   }) async {
-    AuthCredential credential = EmailAuthProvider.credential(
-      email: email,
-      password: currentPassword,
-    );
+    AuthCredential credential = EmailAuthProvider.credential(email: email, password: currentPassword);
     await _currentUser!.reauthenticateWithCredential(credential);
     await _currentUser!.updatePassword(newPassword);
   }

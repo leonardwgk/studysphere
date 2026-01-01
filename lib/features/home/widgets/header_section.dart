@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:studysphere_app/features/auth/providers/user_provider.dart';
+import 'package:studysphere_app/shared/widgets/custom_avatar.dart';
 
 class HeaderSection extends StatelessWidget {
   const HeaderSection({super.key});
@@ -9,23 +10,24 @@ class HeaderSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        // Avatar dan Teks Sapaan
+      children: [
         Row(
           children: [
-            // Avatar (Gunakan CircleAvatar)
-            const CircleAvatar(
-              radius: 25,
-              // backgroundImage: NetworkImage(
-              //   "https://via.placeholder.com/150",
-              // ), // Ganti dengan URL gambar
+            Consumer<UserProvider>(
+              builder: (context, userProvider, child) {
+                return CustomAvatar(
+                  photoUrl: userProvider.user?.photoUrl,
+                  name: userProvider.user?.username ?? 'U',
+                  radius: 25,
+                );
+              },
             ),
             const SizedBox(width: 15),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
+              children: [
                 const Text(
-                  'Hello,',
+                  'Hello, ',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 Consumer<UserProvider>(
@@ -33,12 +35,12 @@ class HeaderSection extends StatelessWidget {
                     if (userProvider.isLoading) {
                       return const SizedBox(
                         width: 100,
-                        height: 20,
+                        height: 4, // Lebih tipis agar rapi
                         child: LinearProgressIndicator(),
                       );
                     }
                     return Text(
-                      userProvider.username ?? 'User',
+                      userProvider.user?.username ?? 'User',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -50,8 +52,12 @@ class HeaderSection extends StatelessWidget {
             ),
           ],
         ),
-        // Ikon Notifikasi (Bell)
-        const Icon(Icons.notifications_none, size: 30),
+        IconButton(
+          onPressed: () {
+            // Logika notifikasi nanti
+          },
+          icon: const Icon(Icons.notifications_none, size: 30),
+        ),
       ],
     );
   }

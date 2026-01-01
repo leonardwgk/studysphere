@@ -3,12 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:studysphere_app/features/calender/pages/calendar_page.dart';
 import 'package:studysphere_app/features/friend/pages/friend_page.dart';
 import 'package:studysphere_app/features/home/data/tabitems.dart';
-import 'package:studysphere_app/features/home/pages/home_page.dart';
-import 'package:studysphere_app/features/home/providers/home_view_model.dart';
+import 'package:studysphere_app/features/home/pages/main_page.dart';
+import 'package:studysphere_app/features/home/providers/home_providers.dart';
 import 'package:studysphere_app/features/profile/pages/profile_page.dart';
 import 'package:studysphere_app/features/profile/widgets/app_bar.dart';
-import 'package:studysphere_app/features/home/services/pending_session_service.dart';
-import 'package:studysphere_app/features/home/pages/post_study_page.dart';
 
 class HomeGate extends StatelessWidget {
   const HomeGate({super.key});
@@ -16,7 +14,7 @@ class HomeGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => HomeViewModel(),
+      create: (_) => HomeProvider(),
       child: const _HomeGateContent(),
     );
   }
@@ -32,36 +30,24 @@ class _HomeGateContent extends StatefulWidget {
 class _HomeGateContentState extends State<_HomeGateContent> {
   late final List<Widget> _pages;
 
+  // Hapus import PendingSessionService yang lama
+  // Hapus fungsi _checkPendingSession() di dalam State
+
   @override
   void initState() {
     super.initState();
-    final viewModel = Provider.of<HomeViewModel>(context, listen: false);
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     _pages = [
       MainPage(
-        key: viewModel.mainPageKey,
-        scrollController: viewModel.homeScrollController,
-        onNavigateToTab: viewModel.setIndex,
+        key: homeProvider.mainPageKey,
+        scrollController: homeProvider.homeScrollController,
+        onNavigateToTab: homeProvider.setIndex,
       ),
       const FriendPage(),
       const CalendarPage(),
       const ProfilePage(),
     ];
-
-    _checkPendingSession();
-  }
-
-  Future<void> _checkPendingSession() async {
-    final session = await PendingSessionService().getSession();
-    if (session != null && mounted) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => PostStudyPage(
-            totalFocusTime: session['focusTime']!,
-            totalBreakTime: session['breakTime']!,
-          ),
-        ),
-      );
-    }
+    // JANGAN panggil _checkPendingSession(); karena filenya sudah tidak ada
   }
 
   final List<TabItem> _tabs = const [
@@ -83,16 +69,17 @@ class _HomeGateContentState extends State<_HomeGateContent> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = Provider.of<HomeViewModel>(context);
-    final currIdx = viewModel.currIdx;
+    final homeProvider = Provider.of<HomeProvider>(context);
+    final currIdx = homeProvider.currIdx;
 
     return Scaffold(
       appBar: _buildAppBar(currIdx),
+      // IndexedStack make the body still alive in memory while navigating between pages.
       body: IndexedStack(index: currIdx, children: _pages),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: currIdx,
-        onTap: viewModel.onBottomNavTap,
+        onTap: homeProvider.onBottomNavTap,
         items: List.generate(_tabs.length, (i) {
           final t = _tabs[i];
           final baseIcon = Icon(t.icon);

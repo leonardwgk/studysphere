@@ -12,20 +12,23 @@ void main() async {
   runApp(const MyApp());
 }
 
-// TODO: Buat jadi StatefulWidget kalau mau buat dark mode
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => UserProvider(),
+        ), // Passing user state untuk data sharing antar widgets
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'StudySphere',
         theme: ThemeData(
           useMaterial3: true,
+          scaffoldBackgroundColor: const Color(0xFFF5F7F9),
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.blue,
             brightness: Brightness.light,
