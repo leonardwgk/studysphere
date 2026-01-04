@@ -118,7 +118,7 @@ This app requires the following Firebase services:
 
 ## 👤 Author
 
-**Henry**
+**RYSOLEI Team & Friends**
 
 ---
 
