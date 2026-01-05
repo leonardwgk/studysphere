@@ -4,6 +4,7 @@ import 'package:studysphere_app/firebase_options.dart';
 import 'package:studysphere_app/features/auth/pages/auth_gate.dart';
 import 'package:provider/provider.dart';
 import 'package:studysphere_app/features/auth/providers/user_provider.dart';
+import 'package:studysphere_app/features/calender/providers/calendar_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,9 +20,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => UserProvider(),
-        ), // Passing user state untuk data sharing antar widgets
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => CalendarProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

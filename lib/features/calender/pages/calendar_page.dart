@@ -1,21 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
-
-class ActivityEvent {
-  final String title;
-  final Color color;
-  final String duration;
-  final String topic;
-  final String notes;
-
-  ActivityEvent({
-    required this.title,
-    required this.color,
-    required this.duration,
-    required this.topic,
-    required this.notes,
-  });
-}
+import 'package:studysphere_app/features/auth/providers/user_provider.dart';
+import 'package:studysphere_app/features/calender/providers/calendar_provider.dart';
+import 'package:studysphere_app/features/home/data/models/summary_model.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -28,6 +17,10 @@ class _CalendarPageState extends State<CalendarPage> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+
+  // Local state for sessions detail (lazy loaded)
+  List<Map<String, dynamic>> _selectedDaySessions = [];
+  bool _isLoadingSessions = false;
 
   final List<String> _motivationalQuotes = [
     'Mulai belajar hari ini! Setiap langkah kecil membawa perubahan besar.',
@@ -48,561 +41,542 @@ class _CalendarPageState extends State<CalendarPage> {
     return _motivationalQuotes[random];
   }
 
-  final Map<DateTime, List<ActivityEvent>> _events = {
-    DateTime.utc(2025, 11, 1): [
-      ActivityEvent(
-        title: 'Flutter Development',
-        color: Colors.blue.shade100,
-        duration: '2 hours 30 minutes',
-        topic: 'State Management dengan Provider',
-        notes:
-            'Mempelajari konsep state management, implementasi Provider, dan best practices dalam Flutter development.',
-      ),
-    ],
-    DateTime.utc(2025, 11, 3): [
-      ActivityEvent(
-        title: 'Mathematics - Calculus',
-        color: Colors.green.shade100,
-        duration: '1 hour 45 minutes',
-        topic: 'Integral dan Aplikasinya',
-        notes:
-            'Memahami konsep integral tentu dan tak tentu, serta aplikasinya dalam menghitung luas dan volume.',
-      ),
-    ],
-    DateTime.utc(2025, 11, 5): [
-      ActivityEvent(
-        title: 'English Grammar',
-        color: Colors.orange.shade100,
-        duration: '1 hour 30 minutes',
-        topic: 'Tenses dan Passive Voice',
-        notes:
-            'Review semua tenses, penggunaan passive voice dalam berbagai konteks, dan latihan soal.',
-      ),
-    ],
-    DateTime.utc(2025, 11, 7): [
-      ActivityEvent(
-        title: 'Data Structures',
-        color: Colors.purple.shade100,
-        duration: '3 hours',
-        topic: 'Binary Trees dan Traversal',
-        notes:
-            'Implementasi binary tree, berbagai metode traversal (inorder, preorder, postorder), dan aplikasinya.',
-      ),
-    ],
-    DateTime.utc(2025, 11, 10): [
-      ActivityEvent(
-        title: 'UI/UX Design',
-        color: Colors.pink.shade100,
-        duration: '2 hours',
-        topic: 'Design Thinking Process',
-        notes:
-            'Mempelajari 5 tahap design thinking: empathize, define, ideate, prototype, dan test.',
-      ),
-    ],
-    DateTime.utc(2025, 11, 12): [
-      ActivityEvent(
-        title: 'Algorithm Analysis',
-        color: Colors.indigo.shade100,
-        duration: '2 hours 15 minutes',
-        topic: 'Time Complexity dan Big O Notation',
-        notes:
-            'Analisis kompleksitas algoritma, memahami Big O, Big Theta, dan Big Omega notation.',
-      ),
-    ],
-    DateTime.utc(2025, 11, 15): [
-      ActivityEvent(
-        title: 'Database Management',
-        color: Colors.teal.shade100,
-        duration: '1 hour 50 minutes',
-        topic: 'SQL Queries dan Joins',
-        notes:
-            'Praktek berbagai jenis JOIN (INNER, LEFT, RIGHT, FULL), subqueries, dan optimization.',
-      ),
-    ],
-    DateTime.utc(2025, 11, 18): [
-      ActivityEvent(
-        title: 'Physics - Mechanics',
-        color: Colors.amber.shade100,
-        duration: '2 hours 20 minutes',
-        topic: 'Hukum Newton dan Dinamika',
-        notes:
-            'Memahami tiga hukum Newton, aplikasi dalam kasus nyata, dan penyelesaian soal dinamika.',
-      ),
-    ],
-    DateTime.utc(2025, 11, 20): [
-      ActivityEvent(
-        title: 'Web Development',
-        color: Colors.cyan.shade100,
-        duration: '3 hours 30 minutes',
-        topic: 'React Hooks dan Context API',
-        notes:
-            'Deep dive ke React Hooks (useState, useEffect, useContext), dan state management dengan Context API.',
-      ),
-    ],
-    DateTime.utc(2025, 11, 22): [
-      ActivityEvent(
-        title: 'Machine Learning Basics',
-        color: Colors.deepPurple.shade100,
-        duration: '2 hours 40 minutes',
-        topic: 'Supervised Learning - Linear Regression',
-        notes:
-            'Konsep supervised learning, implementasi linear regression, dan evaluasi model.',
-      ),
-    ],
-    DateTime.utc(2025, 11, 25): [
-      ActivityEvent(
-        title: 'Software Engineering',
-        color: Colors.red.shade100,
-        duration: '1 hour 55 minutes',
-        topic: 'Agile Methodology dan Scrum',
-        notes:
-            'Memahami prinsip Agile, framework Scrum, sprint planning, dan daily standup.',
-      ),
-    ],
-    DateTime.utc(2025, 11, 27): [
-      ActivityEvent(
-        title: 'Mobile App Development',
-        color: Colors.lightBlue.shade100,
-        duration: '4 hours',
-        topic: 'Firebase Integration',
-        notes:
-            'Integrasi Firebase Authentication, Firestore Database, dan Cloud Storage dalam aplikasi mobile.',
-      ),
-    ],
-    DateTime.utc(2025, 11, 28): [
-      ActivityEvent(
-        title: 'Cloud Computing',
-        color: Colors.blueGrey.shade100,
-        duration: '2 hours 10 minutes',
-        topic: 'AWS Services Overview',
-        notes:
-            'Pengenalan AWS EC2, S3, Lambda, dan basic deployment menggunakan cloud services.',
-      ),
-    ],
-  };
-
-  List<ActivityEvent> _getEventsForDay(DateTime day) {
-    return _events[DateTime.utc(day.year, day.month, day.day)] ?? [];
-  }
-
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadMonthData();
+    });
+  }
+
+  /// Load month data from CalendarProvider (with caching)
+  Future<void> _loadMonthData() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final calendarProvider = Provider.of<CalendarProvider>(
+      context,
+      listen: false,
+    );
+
+    if (userProvider.user == null) return;
+
+    // Load current month summaries (uses cache if available)
+    await calendarProvider.getMonthSummaries(
+      userProvider.user!.uid,
+      _focusedDay,
+    );
+
+    // Load sessions for selected day
+    if (_selectedDay != null) {
+      _loadSessionsForDay(_selectedDay!);
+    }
+  }
+
+  Future<void> _loadSessionsForDay(DateTime day) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final calendarProvider = Provider.of<CalendarProvider>(
+      context,
+      listen: false,
+    );
+
+    if (userProvider.user == null) return;
+
+    setState(() => _isLoadingSessions = true);
+
+    try {
+      final sessions = await calendarProvider.getSessionsForDate(
+        userProvider.user!.uid,
+        day,
+      );
+      setState(() {
+        _selectedDaySessions = sessions;
+        _isLoadingSessions = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingSessions = false);
+      debugPrint("Error loading sessions: $e");
+    }
+  }
+
+  /// Get summary for a day from CalendarProvider cache (no API call)
+  SummaryModel? _getSummaryForDay(DateTime day) {
+    final calendarProvider = Provider.of<CalendarProvider>(
+      context,
+      listen: false,
+    );
+    return calendarProvider.getSummaryForDay(day);
+  }
+
+  bool _hasStudySession(DateTime day) {
+    final summary = _getSummaryForDay(day);
+    return summary != null && summary.dailyTotal > 0;
+  }
+
+  String _formatDuration(int seconds) {
+    if (seconds < 60) return '${seconds}s';
+
+    int hours = seconds ~/ 3600;
+    int minutes = (seconds % 3600) ~/ 60;
+
+    if (hours > 0) {
+      return '${hours}h ${minutes}m';
+    }
+    return '${minutes}m';
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat('d MMMM yyyy').format(date);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'Calendar',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Calendar Widget
-            Container(
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.shade100,
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: TableCalendar(
-                firstDay: DateTime.utc(2020, 1, 1),
-                lastDay: DateTime.utc(2030, 12, 31),
-                focusedDay: _focusedDay,
-                calendarFormat: _calendarFormat,
-                selectedDayPredicate: (day) {
-                  return isSameDay(_selectedDay, day);
-                },
-                onDaySelected: (selectedDay, focusedDay) {
-                  setState(() {
-                    _selectedDay = selectedDay;
-                    _focusedDay = focusedDay;
-                  });
-
-                  // Navigate ke detail aktivitas
-                  List<ActivityEvent> events = _getEventsForDay(selectedDay);
-                  if (events.isNotEmpty) {
-                    _showActivityDetail(selectedDay, events);
-                  }
-                },
-                onFormatChanged: (format) {
-                  setState(() {
-                    _calendarFormat = format;
-                  });
-                },
-                onPageChanged: (focusedDay) {
-                  _focusedDay = focusedDay;
-                },
-                eventLoader: _getEventsForDay,
-                // Styling
-                calendarStyle: CalendarStyle(
-                  todayDecoration: BoxDecoration(
-                    color: Colors.black,
-                    shape: BoxShape.circle,
-                  ),
-                  selectedDecoration: BoxDecoration(
-                    color: Colors.blue.shade400,
-                    shape: BoxShape.circle,
-                  ),
-                  markerDecoration: BoxDecoration(
-                    color: Colors.orange.shade400,
-                    shape: BoxShape.circle,
-                  ),
-                  markersMaxCount: 1,
-                  outsideDaysVisible: true,
-                ),
-                headerStyle: HeaderStyle(
-                  formatButtonVisible: false,
-                  titleCentered: true,
-                  titleTextStyle: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  leftChevronIcon: Icon(
-                    Icons.chevron_left,
-                    color: Colors.black,
-                  ),
-                  rightChevronIcon: Icon(
-                    Icons.chevron_right,
-                    color: Colors.black,
-                  ),
-                ),
-                daysOfWeekStyle: DaysOfWeekStyle(
-                  weekdayStyle: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  weekendStyle: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                calendarBuilders: CalendarBuilders(
-                  markerBuilder: (context, date, events) {
-                    if (events.isNotEmpty) {
-                      final event = events.first as ActivityEvent;
-                      return Positioned(
-                        bottom: 2,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: event.color,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            event.title,
-                            style: const TextStyle(
-                              color: Colors.black87,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ),
-                      );
-                    }
-                    return null;
-                  },
-                ),
+    return Consumer<CalendarProvider>(
+      builder: (context, calendarProvider, child) {
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            title: const Text(
+              'Study Calendar',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
               ),
             ),
+          ),
+          body: calendarProvider.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: () async {
+                    final userProvider = Provider.of<UserProvider>(
+                      context,
+                      listen: false,
+                    );
+                    if (userProvider.user != null) {
+                      await calendarProvider.forceRefresh(
+                        userProvider.user!.uid,
+                      );
+                    }
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      children: [
+                        // Calendar Widget
+                        _buildCalendar(),
 
-            // Selected Day Info Card - Study Session Summary
-            if (_selectedDay != null &&
-                _getEventsForDay(_selectedDay!).isNotEmpty)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.green.shade400, Colors.teal.shade400],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.green.shade200,
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.check_circle, color: Colors.white, size: 28),
-                        const SizedBox(width: 12),
-                        Text(
-                          '${_selectedDay!.day} November 2025',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Text(
-                          'Study Session Completed',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.emoji_events,
-                          color: Colors.amber.shade300,
-                          size: 24,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.book, color: Colors.white, size: 18),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _getEventsForDay(_selectedDay!).first.title,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.access_time,
-                                color: Colors.white70,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _getEventsForDay(_selectedDay!).first.duration,
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.topic,
-                                color: Colors.white70,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  _getEventsForDay(_selectedDay!).first.topic,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        // Selected Day Info
+                        if (_selectedDay != null) ...[
+                          const SizedBox(height: 16),
+                          _buildSelectedDayCard(),
                         ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    GestureDetector(
-                      onTap: () => _showActivityDetail(
-                        _selectedDay!,
-                        _getEventsForDay(_selectedDay!),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'View Full Details',
-                              style: TextStyle(
-                                color: Colors.green.shade700,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Icon(
-                              Icons.arrow_forward,
-                              color: Colors.green.shade700,
-                              size: 16,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
-            // Selected Day Info Card - No Study Session
-            if (_selectedDay != null && _getEventsForDay(_selectedDay!).isEmpty)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.orange.shade400,
-                      Colors.deepOrange.shade400,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.orange.shade200,
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          '${_selectedDay!.day} November 2025',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Text(
-                          'No Study Session',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.sentiment_neutral,
-                          color: Colors.white70,
-                          size: 24,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.lightbulb_outline,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _getRandomMotivation(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontStyle: FontStyle.italic,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        );
+      },
+    );
+  }
 
-            const SizedBox(height: 20),
-          ],
+  Widget _buildCalendar() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade100,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TableCalendar(
+        firstDay: DateTime.utc(2020, 1, 1),
+        lastDay: DateTime.utc(2030, 12, 31),
+        focusedDay: _focusedDay,
+        calendarFormat: _calendarFormat,
+        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+        onDaySelected: (selectedDay, focusedDay) {
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
+          _loadSessionsForDay(selectedDay);
+        },
+        onFormatChanged: (format) {
+          setState(() => _calendarFormat = format);
+        },
+        onPageChanged: (focusedDay) {
+          _focusedDay = focusedDay;
+          // Load new month data when user swipes (uses cache if available)
+          final userProvider = Provider.of<UserProvider>(
+            context,
+            listen: false,
+          );
+          if (userProvider.user != null) {
+            context.read<CalendarProvider>().getMonthSummaries(
+              userProvider.user!.uid,
+              focusedDay,
+            );
+          }
+        },
+        eventLoader: (day) {
+          return _hasStudySession(day) ? [true] : [];
+        },
+        calendarStyle: CalendarStyle(
+          todayDecoration: const BoxDecoration(
+            color: Colors.black,
+            shape: BoxShape.circle,
+          ),
+          selectedDecoration: BoxDecoration(
+            color: Colors.blue.shade400,
+            shape: BoxShape.circle,
+          ),
+          markerDecoration: BoxDecoration(
+            color: Colors.orange.shade400,
+            shape: BoxShape.circle,
+          ),
+          markersMaxCount: 1,
+          outsideDaysVisible: true,
+        ),
+        headerStyle: const HeaderStyle(
+          formatButtonVisible: false,
+          titleCentered: true,
+          titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          leftChevronIcon: Icon(Icons.chevron_left, color: Colors.black),
+          rightChevronIcon: Icon(Icons.chevron_right, color: Colors.black),
+        ),
+        daysOfWeekStyle: DaysOfWeekStyle(
+          weekdayStyle: TextStyle(
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w600,
+          ),
+          weekendStyle: TextStyle(
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        calendarBuilders: CalendarBuilders(
+          markerBuilder: (context, date, events) {
+            if (events.isNotEmpty) {
+              final summary = _getSummaryForDay(date);
+              return Positioned(
+                bottom: 2,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _getColorForDuration(summary?.dailyTotal ?? 0),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            }
+            return null;
+          },
         ),
       ),
     );
   }
 
-  void _showActivityDetail(DateTime date, List<ActivityEvent> events) {
-    final event = events.first;
+  Widget _buildSelectedDayCard() {
+    final summary = _getSummaryForDay(_selectedDay!);
+    final hasStudied = summary != null && summary.dailyTotal > 0;
 
+    if (hasStudied) {
+      return _buildStudyCompletedCard(summary);
+    } else {
+      return _buildNoStudyCard();
+    }
+  }
+
+  Widget _buildStudyCompletedCard(SummaryModel summary) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.green.shade400, Colors.teal.shade400],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.shade200,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 28),
+              const SizedBox(width: 12),
+              Text(
+                _formatDate(_selectedDay!),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Title
+          const Row(
+            children: [
+              Text(
+                'Study Session Completed',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(width: 8),
+              Icon(Icons.emoji_events, color: Colors.amber, size: 24),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Stats
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                _buildStatRow(
+                  Icons.timer,
+                  'Focus Time',
+                  _formatDuration(summary.dailyFocus),
+                ),
+                const SizedBox(height: 8),
+                _buildStatRow(
+                  Icons.coffee,
+                  'Break Time',
+                  _formatDuration(summary.dailyBreak),
+                ),
+                const SizedBox(height: 8),
+                _buildStatRow(
+                  Icons.access_time_filled,
+                  'Total',
+                  _formatDuration(summary.dailyTotal),
+                ),
+                if (summary.labelsStudied.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _buildStatRow(
+                    Icons.label,
+                    'Subjects',
+                    summary.labelsStudied.join(', '),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // Sessions detail button
+          if (_selectedDaySessions.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => _showSessionsDetail(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'View ${_selectedDaySessions.length} Session(s)',
+                      style: TextStyle(
+                        color: Colors.green.shade700,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.arrow_forward,
+                      color: Colors.green.shade700,
+                      size: 16,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+
+          if (_isLoadingSessions)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 14),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.right,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoStudyCard() {
+    final bool isFuture = _selectedDay!.isAfter(DateTime.now());
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isFuture
+              ? [Colors.blue.shade400, Colors.indigo.shade400]
+              : [Colors.orange.shade400, Colors.deepOrange.shade400],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: isFuture ? Colors.blue.shade200 : Colors.orange.shade200,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isFuture ? Icons.event : Icons.calendar_today,
+                color: Colors.white,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                _formatDate(_selectedDay!),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Text(
+                isFuture ? 'Upcoming Day' : 'No Study Session',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                isFuture ? Icons.schedule : Icons.sentiment_neutral,
+                color: Colors.white70,
+                size: 24,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.lightbulb_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _getRandomMotivation(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSessionsDetail() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
         padding: const EdgeInsets.all(24),
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -618,25 +592,29 @@ class _CalendarPageState extends State<CalendarPage> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: event.color,
+                    color: Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.school, color: Colors.black87, size: 28),
+                  child: Icon(
+                    Icons.history,
+                    color: Colors.blue.shade700,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        event.title,
-                        style: const TextStyle(
+                      const Text(
+                        'Session History',
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        '${date.day} November 2025',
+                        _formatDate(_selectedDay!),
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade600,
@@ -645,160 +623,151 @@ class _CalendarPageState extends State<CalendarPage> {
                     ],
                   ),
                 ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
               ],
             ),
-            const SizedBox(height: 24),
-
-            // Duration
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.access_time,
-                    color: Colors.blue.shade700,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Study Duration',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        event.duration,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
             const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 8),
 
-            // Topic
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.purple.shade50,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.topic, color: Colors.purple.shade700, size: 24),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Topic Covered',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          event.topic,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.purple.shade700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Notes
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.notes,
-                        color: Colors.orange.shade700,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Study Notes',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    event.notes,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      height: 1.5,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Close Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Close',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+            // Sessions List
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: _selectedDaySessions.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final session = _selectedDaySessions[index];
+                  return _buildSessionCard(session, index + 1);
+                },
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildSessionCard(Map<String, dynamic> session, int index) {
+    final focusDuration = session['focusDuration'] as int? ?? 0;
+    final breakDuration = session['breakDuration'] as int? ?? 0;
+    final label = session['label'] as String? ?? 'Unknown';
+    final description = session['description'] as String? ?? '';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Session #$index',
+                  style: TextStyle(
+                    color: Colors.blue.shade700,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.orange.shade700,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildMiniStat(
+                Icons.timer,
+                'Focus',
+                _formatDuration(focusDuration),
+                Colors.green,
+              ),
+              const SizedBox(width: 16),
+              _buildMiniStat(
+                Icons.coffee,
+                'Break',
+                _formatDuration(breakDuration),
+                Colors.orange,
+              ),
+            ],
+          ),
+          if (description.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              description,
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniStat(
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 4),
+        Text(
+          '$label: ',
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+      ],
+    );
+  }
+
+  Color _getColorForDuration(int totalSeconds) {
+    final minutes = totalSeconds ~/ 60;
+    if (minutes == 0) return Colors.grey;
+    if (minutes < 30) return Colors.orange[300]!;
+    if (minutes < 60) return Colors.orange[400]!;
+    if (minutes < 120) return Colors.orange[600]!;
+    return Colors.orange[800]!;
   }
 }

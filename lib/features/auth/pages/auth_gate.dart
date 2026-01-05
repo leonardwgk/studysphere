@@ -4,6 +4,7 @@ import 'package:studysphere_app/features/auth/pages/login_page.dart';
 import 'package:studysphere_app/features/home/pages/home_gate.dart';
 import 'package:provider/provider.dart';
 import 'package:studysphere_app/features/auth/providers/user_provider.dart';
+import 'package:studysphere_app/features/calender/providers/calendar_provider.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -23,12 +24,15 @@ class AuthGate extends StatelessWidget {
 
         // 2. If we have a user -> Go to Home
         if (snapshot.hasData) {
-          // Fetch user data when logged in
+          final userId = snapshot.data!.uid;
+          
+          // Fetch user data and preload calendar data when logged in
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            Provider.of<UserProvider>(
-              context,
-              listen: false,
-            ).fetchUser(snapshot.data!.uid);
+            // Load user profile
+            Provider.of<UserProvider>(context, listen: false).fetchUser(userId);
+            
+            // Preload calendar/stats data (this ensures data is ready for all pages)
+            Provider.of<CalendarProvider>(context, listen: false).loadHomeData(userId);
           });
           return const HomeGate();
         }
