@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "1036166164305",
-    "project_id": "studysphere-3785f",
-    "storage_bucket": "studysphere-3785f.firebasestorage.app"
+    "project_number": "YOUR_PROJECT_NUMBER",
+    "project_id": "YOUR_PROJECT_ID",
+    "storage_bucket": "YOUR_PROJECT_ID.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1036166164305:android:e21271b1b67cef94666d70",
+        "mobilesdk_app_id": "YOUR_ANDROID_APP_ID",
         "android_client_info": {
           "package_name": "com.example.studysphere_app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDBiDLVLRwDayHoy0el60_xsTVuP2QnaeI"
+          "current_key": "YOUR_ANDROID_API_KEY"
         }
       ],
       "services": {

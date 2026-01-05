@@ -43,3 +43,15 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# iOS Firebase config
+ios/Runner/GoogleService-Info.plist
+
+# Keystore files
+*.jks
+*.keystore
+key.properties
+
+# api
+/lib/firebase_options.dart
+/android/app/google-services.json
