@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:studysphere_app/features/auth/providers/user_provider.dart';
+import 'package:studysphere_app/features/calender/providers/calendar_provider.dart';
 import 'package:studysphere_app/features/home/providers/home_providers.dart';
 import 'package:studysphere_app/features/home/widgets/header_section.dart';
 import 'package:studysphere_app/features/home/widgets/post_feed_section.dart';
@@ -32,10 +33,14 @@ class MainPageState extends State<MainPage> {
 
   void _initData() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final calendarProvider = Provider.of<CalendarProvider>(context, listen: false);
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
 
     if (userProvider.user != null) {
-      homeProvider.refreshAllData(userProvider.user!.uid);
+      // Load stats from CalendarProvider (with caching)
+      calendarProvider.loadHomeData(userProvider.user!.uid);
+      // Load social feed posts
+      homeProvider.fetchPosts();
     }
   }
 
@@ -45,13 +50,17 @@ class MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final calendarProvider = context.watch<CalendarProvider>();
+    
     return SafeArea(
       // RefreshIndicator untuk fitur Pull-to-Refresh
       child: RefreshIndicator(
         onRefresh: () async {
-          _initData();
-          // Beri sedikit delay agar animasinya terlihat natural
-          await Future.delayed(const Duration(seconds: 1));
+          final userProvider = Provider.of<UserProvider>(context, listen: false);
+          if (userProvider.user != null) {
+            // Force refresh on pull-to-refresh
+            await context.read<CalendarProvider>().forceRefresh(userProvider.user!.uid);
+          }
         },
         child: SingleChildScrollView(
           // physics: AlwaysScrollableScrollPhysics wajib agar bisa di-pull meski konten sedikit
@@ -66,6 +75,7 @@ class MainPageState extends State<MainPage> {
                 const SizedBox(height: 30),
                 ProgressCalendar(
                   onViewCalendar: () => widget.onNavigateToTab(2),
+                  weeklySummaries: calendarProvider.weeklySummaries,
                 ),
                 const SizedBox(height: 30),
                 const StartStudyButton(),

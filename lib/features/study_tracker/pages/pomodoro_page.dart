@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:vibration/vibration.dart';
 import '../providers/timer_provider.dart';
 import '../data/models/session_type.dart';
 import 'post_study_page.dart';
@@ -23,12 +24,14 @@ class _PomodoroView extends StatelessWidget {
   Widget build(BuildContext context) {
     final tp = context.watch<TimerProvider>();
 
-    // UI Logic untuk warna
-    Color themeColor = tp.sessionType == SessionType.focus ? Colors.black : Colors.green;
-    String statusText = tp.sessionType == SessionType.focus ? "Focus Time" : "Short Break";
+    // UI Logic untuk warna berdasarkan session type
+    final bool isFocusMode = tp.sessionType == SessionType.focus;
+    Color themeColor = isFocusMode ? Colors.black : Colors.green;
+    Color backgroundColor = isFocusMode ? Colors.white : const Color(0xFFE8F5E9);
+    String statusText = isFocusMode ? "Focus Time" : "Break Time";
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColor,
       body: Stack(
         children: [
           _buildBackground(),
@@ -36,12 +39,14 @@ class _PomodoroView extends StatelessWidget {
             child: Column(
               children: [
                 _buildHeader(context, tp),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
+                _buildIterationBadge(tp),
+                const SizedBox(height: 10),
                 _buildSubjectTitle(context, tp),
                 const Spacer(),
                 _buildTimerCircle(tp, themeColor, statusText),
                 const Spacer(),
-                _buildControls(context, tp),
+                _buildControls(context, tp, themeColor),
                 const SizedBox(height: 20),
                 _buildStopButton(context, tp),
               ],
@@ -59,7 +64,46 @@ class _PomodoroView extends StatelessWidget {
       child: Opacity(
         opacity: 0.05,
         child: Image.asset('assets/images/wavy_bg.png', fit: BoxFit.cover,
-            errorBuilder: (c, o, s) => Container(color: Colors.white)),
+            errorBuilder: (c, o, s) => Container()),
+      ),
+    );
+  }
+
+  Widget _buildIterationBadge(TimerProvider tp) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.loop, size: 18, color: Colors.grey[700]),
+          const SizedBox(width: 8),
+          Text(
+            "Pomodoro #${tp.currentIteration}",
+            style: TextStyle(
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+          if (tp.completedPomodoros > 0) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                "✓ ${tp.completedPomodoros}",
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -72,15 +116,43 @@ class _PomodoroView extends StatelessWidget {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back_ios, size: 20),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => _handleBackButton(context, tp),
           ),
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => _showSettings(context, tp),
+            icon: Icon(
+              Icons.settings_outlined,
+              color: tp.isRunning ? Colors.grey[400] : Colors.black,
+            ),
+            onPressed: tp.isRunning ? null : () => _showSettings(context, tp),
           ),
         ],
       ),
     );
+  }
+
+  void _handleBackButton(BuildContext context, TimerProvider tp) {
+    if (tp.totalFocusElapsed > 0 || tp.totalBreakElapsed > 0) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Keluar dari Sesi?"),
+          content: const Text("Progress belajar Anda akan hilang jika keluar sekarang."),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Batal")),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+              child: const Text("Ya, Keluar"),
+            ),
+          ],
+        ),
+      );
+    } else {
+      Navigator.pop(context);
+    }
   }
 
   Widget _buildSubjectTitle(BuildContext context, TimerProvider tp) {
@@ -164,7 +236,15 @@ class _PomodoroView extends StatelessWidget {
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(status, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(status, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+            ),
+            const SizedBox(height: 8),
             Text(tp.timeString, 
                 style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold)),
           ],
@@ -173,12 +253,34 @@ class _PomodoroView extends StatelessWidget {
     );
   }
 
-  Widget _buildControls(BuildContext context, TimerProvider tp) {
+  Widget _buildControls(BuildContext context, TimerProvider tp, Color themeColor) {
     return GestureDetector(
-      onTap: () => tp.isRunning ? tp.pauseTimer() : tp.startTimer(),
-      child: Container(
-        width: 80, height: 80,
-        decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
+      onTap: () async {
+        if (tp.isRunning) {
+          tp.pauseTimer();
+        } else {
+          // Vibrate on start
+          if (await Vibration.hasVibrator()) {
+            Vibration.vibrate(duration: 50);
+          }
+          tp.startTimer();
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 80, 
+        height: 80,
+        decoration: BoxDecoration(
+          color: themeColor,
+          shape: BoxShape.circle,
+          boxShadow: tp.isRunning ? [
+            BoxShadow(
+              color: themeColor.withOpacity(0.4),
+              blurRadius: 20,
+              spreadRadius: 2,
+            )
+          ] : null,
+        ),
         child: Icon(tp.isRunning ? Icons.pause : Icons.play_arrow, 
             color: Colors.white, size: 40),
       ),
@@ -206,17 +308,48 @@ class _PomodoroView extends StatelessWidget {
   // --- LOGIC FUNCTIONS ---
 
   void _handleStop(BuildContext context, TimerProvider tp) {
+    // Validasi: Jika belum ada waktu focus sama sekali
+    if (tp.totalFocusElapsed == 0) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Belum Ada Sesi"),
+          content: const Text("Anda belum memulai focus time. Mulai timer terlebih dahulu sebelum menyelesaikan sesi."),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Mengerti"),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Hentikan Sesi?"),
-        content: const Text("Data belajar Anda akan disimpan."),
+        title: const Text("Selesaikan Sesi?"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Ringkasan sesi Anda:"),
+            const SizedBox(height: 12),
+            _buildSummaryRow(Icons.timer, "Focus Time", _formatDuration(tp.totalFocusElapsed)),
+            const SizedBox(height: 8),
+            _buildSummaryRow(Icons.coffee, "Break Time", _formatDuration(tp.totalBreakElapsed)),
+            const SizedBox(height: 8),
+            _buildSummaryRow(Icons.check_circle, "Pomodoro Selesai", "${tp.completedPomodoros}"),
+          ],
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Batal")),
           ElevatedButton(
             onPressed: () {
               int focus = tp.totalFocusElapsed;
               int breakTime = tp.totalBreakElapsed;
+              String subject = tp.subject;
               tp.stopTimer();
               Navigator.pop(ctx);
               Navigator.pushReplacement(
@@ -224,7 +357,7 @@ class _PomodoroView extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => PostStudyPage(
                   totalFocusTime: focus, 
                   totalBreakTime: breakTime,
-                  initialLabel: tp.subject,
+                  initialLabel: subject,
                 ))
               );
             },
@@ -233,6 +366,27 @@ class _PomodoroView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildSummaryRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.grey[600]),
+        const SizedBox(width: 8),
+        Text(label, style: TextStyle(color: Colors.grey[600])),
+        const Spacer(),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  String _formatDuration(int seconds) {
+    int mins = seconds ~/ 60;
+    int secs = seconds % 60;
+    if (mins > 0) {
+      return "${mins}m ${secs}s";
+    }
+    return "${secs}s";
   }
 
   void _showSettings(BuildContext context, TimerProvider tp) {
@@ -247,10 +401,28 @@ class _PomodoroView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text("Settings", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text("Pengaturan Timer", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(
+                  "Focus: ${TimerProvider.minFocusMinutes}-${TimerProvider.maxFocusMinutes} menit | Break: ${TimerProvider.minBreakMinutes}-${TimerProvider.maxBreakMinutes} menit",
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
                 const SizedBox(height: 20),
-                _buildTimePicker("Focus Duration", vm.focusMinutes, (v) => vm.setCustomFocusTime(v)),
-                _buildTimePicker("Break Duration", vm.shortBreakMinutes, (v) => vm.setCustomShortBreakTime(v)),
+                _buildTimePicker(
+                  "Focus Duration", 
+                  vm.focusMinutes, 
+                  (v) => vm.setCustomFocusTime(v),
+                  canDecrease: vm.canDecreaseFocus(),
+                  canIncrease: vm.canIncreaseFocus(),
+                ),
+                const SizedBox(height: 12),
+                _buildTimePicker(
+                  "Break Duration", 
+                  vm.shortBreakMinutes, 
+                  (v) => vm.setCustomShortBreakTime(v),
+                  canDecrease: vm.canDecreaseBreak(),
+                  canIncrease: vm.canIncreaseBreak(),
+                ),
                 const SizedBox(height: 20),
               ],
             ),
@@ -260,16 +432,32 @@ class _PomodoroView extends StatelessWidget {
     );
   }
 
-  Widget _buildTimePicker(String title, int value, Function(int) onChanged) {
+  Widget _buildTimePicker(String title, int value, Function(int) onChanged, {
+    required bool canDecrease,
+    required bool canIncrease,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title),
+        Text(title, style: const TextStyle(fontSize: 16)),
         Row(
           children: [
-            IconButton(icon: const Icon(Icons.remove), onPressed: () => onChanged(value - 1)),
-            Text("$value min", style: const TextStyle(fontWeight: FontWeight.bold)),
-            IconButton(icon: const Icon(Icons.add), onPressed: () => onChanged(value + 1)),
+            IconButton(
+              icon: Icon(Icons.remove, color: canDecrease ? Colors.black : Colors.grey[300]),
+              onPressed: canDecrease ? () => onChanged(value - 1) : null,
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text("$value min", style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            IconButton(
+              icon: Icon(Icons.add, color: canIncrease ? Colors.black : Colors.grey[300]),
+              onPressed: canIncrease ? () => onChanged(value + 1) : null,
+            ),
           ],
         )
       ],

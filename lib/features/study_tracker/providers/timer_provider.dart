@@ -1,9 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:vibration/vibration.dart';
 import '../data/models/session_type.dart';
 
 class TimerProvider with ChangeNotifier {
-  // Pengaturan Waktu (Menit)
+  // Pengaturan Waktu (Menit) - dengan batas validasi
+  static const int minFocusMinutes = 1;
+  static const int maxFocusMinutes = 120;
+  static const int minBreakMinutes = 1;
+  static const int maxBreakMinutes = 60;
+
   int _focusMinutes = 25;
   int _shortBreakMinutes = 5;
   
@@ -13,9 +19,14 @@ class TimerProvider with ChangeNotifier {
   bool _isRunning = false;
   SessionType _sessionType = SessionType.focus;
 
+  // Iterasi Pomodoro (Track berapa kali focus selesai)
+  int _currentIteration = 1;
+  static const int iterationsBeforeLongBreak = 4;
+
   // Statistik Sesi (Untuk dikirim ke PostStudyPage)
   int _totalFocusElapsed = 0;
   int _totalBreakElapsed = 0;
+  int _completedPomodoros = 0; // Jumlah pomodoro yang selesai penuh
 
   // variabel subjek dan daftar kategori
   String _subject = "Matematika"; 
@@ -39,6 +50,8 @@ class TimerProvider with ChangeNotifier {
   int get totalBreakElapsed => _totalBreakElapsed;
   String get subject => _subject;
   List<String> get categories => _categories;
+  int get currentIteration => _currentIteration;
+  int get completedPomodoros => _completedPomodoros;
 
   void setSubject(String newSubject) {
     _subject = newSubject;
@@ -58,9 +71,9 @@ class TimerProvider with ChangeNotifier {
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
-  // Pengaturan Waktu Custom
+  // Pengaturan Waktu Custom dengan Validasi
   void setCustomFocusTime(int mins) {
-    if (mins < 1) return;
+    if (mins < minFocusMinutes || mins > maxFocusMinutes) return;
     _focusMinutes = mins;
     if (!_isRunning && _sessionType == SessionType.focus) {
       _secondsRemaining = _focusMinutes * 60;
@@ -69,13 +82,19 @@ class TimerProvider with ChangeNotifier {
   }
 
   void setCustomShortBreakTime(int mins) {
-    if (mins < 1) return;
+    if (mins < minBreakMinutes || mins > maxBreakMinutes) return;
     _shortBreakMinutes = mins;
     if (!_isRunning && _sessionType != SessionType.focus) {
       _secondsRemaining = _shortBreakMinutes * 60;
     }
     notifyListeners();
   }
+
+  // Validasi: Cek apakah nilai bisa dikurangi/ditambah
+  bool canDecreaseFocus() => _focusMinutes > minFocusMinutes;
+  bool canIncreaseFocus() => _focusMinutes < maxFocusMinutes;
+  bool canDecreaseBreak() => _shortBreakMinutes > minBreakMinutes;
+  bool canIncreaseBreak() => _shortBreakMinutes < maxBreakMinutes;
 
   // Kontrol Timer
   void startTimer() {
@@ -113,15 +132,39 @@ class TimerProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void _handleSessionSwitch() {
+  Future<void> _handleSessionSwitch() async {
     pauseTimer();
+    
+    // Trigger vibration untuk notifikasi transisi
+    if (await Vibration.hasVibrator()) {
+      // Pattern: vibrate-pause-vibrate untuk notifikasi yang jelas
+      Vibration.vibrate(pattern: [0, 500, 200, 500]);
+    }
+
     if (_sessionType == SessionType.focus) {
+      // Focus selesai -> pindah ke break
+      _completedPomodoros++;
       _sessionType = SessionType.shortBreak;
       _secondsRemaining = _shortBreakMinutes * 60;
     } else {
+      // Break selesai -> pindah ke focus berikutnya
+      _currentIteration++;
       _sessionType = SessionType.focus;
       _secondsRemaining = _focusMinutes * 60;
     }
+    notifyListeners();
+  }
+
+  // Reset semua state (untuk sesi baru)
+  void resetAll() {
+    _timer?.cancel();
+    _isRunning = false;
+    _sessionType = SessionType.focus;
+    _secondsRemaining = _focusMinutes * 60;
+    _totalFocusElapsed = 0;
+    _totalBreakElapsed = 0;
+    _currentIteration = 1;
+    _completedPomodoros = 0;
     notifyListeners();
   }
 
