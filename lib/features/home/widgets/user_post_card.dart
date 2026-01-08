@@ -97,7 +97,7 @@ class _UserPostCardState extends State<UserPostCard> {
                       ],
                     ),
                     Text(
-                      'Studying: ' + widget.post.label,
+                      'Studying: ${widget.post.label}',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],

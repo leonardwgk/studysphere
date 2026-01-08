@@ -247,7 +247,7 @@ class _PostStudyPageState extends State<PostStudyPage> {
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
-                  value: _selectedLabel,
+                  initialValue: _selectedLabel,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.grey[50],
