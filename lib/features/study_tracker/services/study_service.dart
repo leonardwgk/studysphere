@@ -116,12 +116,12 @@ class StudyService {
           await tempFile.delete();
         }
       } catch (e) {
-        print("Gagal menghapus file temp: $e");
+        debugPrint("Gagal menghapus file temp: $e");
       }
 
       return downloadUrl;
     } catch (e) {
-      print("Error upload image: $e");
+      debugPrint("Error upload image: $e");
       return null;
     }
   }

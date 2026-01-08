@@ -99,6 +99,8 @@ class _PostStudyPageState extends State<PostStudyPage> {
         // 3. REFRESH PROVIDER (Update statistik Home secara instan)
         await userProvider.fetchUser(userProvider.user!.uid);
 
+        if (!mounted) return;
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Session successfully shared!'),
@@ -175,9 +177,9 @@ class _PostStudyPageState extends State<PostStudyPage> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.05),
+                    color: Colors.blue.withValues(alpha: .05),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.blue.withOpacity(0.1)),
+                    border: Border.all(color: Colors.blue.withValues(alpha: .1)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -247,7 +249,7 @@ class _PostStudyPageState extends State<PostStudyPage> {
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
-                  value: _selectedLabel,
+                  initialValue: _selectedLabel,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.grey[50],
