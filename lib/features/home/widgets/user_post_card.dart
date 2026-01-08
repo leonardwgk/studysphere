@@ -56,7 +56,7 @@ class _UserPostCardState extends State<UserPostCard> {
         borderRadius: BorderRadius.circular(16), // Sudut melengkung
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05), // Bayangan sangat tipis
+            color: Colors.black.withValues(alpha: .05), // Bayangan sangat tipis
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -97,7 +97,7 @@ class _UserPostCardState extends State<UserPostCard> {
                       ],
                     ),
                     Text(
-                      'Studying: ' + widget.post.label,
+                      'Studying: ${widget.post.label}',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
