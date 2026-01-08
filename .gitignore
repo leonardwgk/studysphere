@@ -55,3 +55,27 @@ key.properties
 # api
 /lib/firebase_options.dart
 /android/app/google-services.json
+
+# Android build-specific junk
+android/.gradle/
+android/.kotlin/
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+android/app/src/main/kotlin/io/flutter/plugins/GeneratedPluginRegistrant.kt
+
+# C++ / Native build junk
+android/app/.cxx/
+.cxx/
+
+# Windows build junk
+windows/flutter/ephemeral/
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugin_registrant.h
+windows/flutter/generated_plugins.cmake
+
+# Mac/iOS build junk
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+macos/Flutter/ephemeral/
+
+# Secrets
+.env
