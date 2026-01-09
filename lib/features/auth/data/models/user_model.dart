@@ -44,4 +44,24 @@ class UserModel {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
     );
   }
+
+  factory UserModel.fromMap(Map<String, dynamic> map, {String? id}) {
+    return UserModel(
+      uid: id ?? map['uid'] ?? '',
+      email: map['email'] ?? '',
+      username: map['username'] ?? '',
+      photoUrl: map['photoUrl'] ?? '',
+      searchKeywords: List<String>.from(map['searchKeywords'] ?? []),
+      totalFocusTime: map['totalFocusTime'] ?? 0,
+      totalBreakTime: map['totalBreakTime'] ?? 0,
+      followingCount: map['followingCount'] ?? 0,
+      followersCount: map['followersCount'] ?? 0,
+      badges: List<String>.from(map['badges'] ?? []),
+      
+      // Mengambil createdAt dan mengubahnya dari Timestamp ke DateTime
+      createdAt: map['createdAt'] != null
+          ? (map['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
+    );
+  }
 }
