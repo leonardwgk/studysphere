@@ -117,11 +117,6 @@ class _FriendPageState extends State<FriendPage> {
             user.username,
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          subtitle: Text(
-            user.email, // Atau info lain seperti "Student"
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
-            overflow: TextOverflow.ellipsis,
-          ),
           trailing: ElevatedButton(
             onPressed: () {
               // TODO: Implementasi logika Follow nanti
