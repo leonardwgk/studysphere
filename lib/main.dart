@@ -5,6 +5,7 @@ import 'package:studysphere_app/features/auth/pages/auth_gate.dart';
 import 'package:provider/provider.dart';
 import 'package:studysphere_app/features/auth/providers/user_provider.dart';
 import 'package:studysphere_app/features/calender/providers/calendar_provider.dart';
+import 'package:studysphere_app/features/friend/providers/friend_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => CalendarProvider()),
+        ChangeNotifierProvider(create: (_) => FriendProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
