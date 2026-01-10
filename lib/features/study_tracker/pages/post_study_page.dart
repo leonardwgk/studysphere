@@ -96,8 +96,10 @@ class _PostStudyPageState extends State<PostStudyPage> {
 
         if (!mounted) return;
 
-        // 3. REFRESH PROVIDER (Update statistik Home secara instan)
-        await userProvider.fetchUser(userProvider.user!.uid);
+        // 3. REFRESH PROVIDER
+        // Kita panggil initUserStream untuk memastikan data terbaru ter-load.
+        // Tidak perlu 'await' karena fungsi ini void.
+        userProvider.initUserStream();
 
         if (!mounted) return;
         
