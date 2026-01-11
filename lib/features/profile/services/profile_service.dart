@@ -11,24 +11,22 @@ class ProfileService {
 
   // 1. Get User Stream
   Stream<UserModel> getUserStream() {
-    String uid = _auth.currentUser!.uid; 
-    return _firestore
-        .collection('users')
-        .doc(uid)
-        .snapshots()
-        .map((snapshot) {
-          if (snapshot.exists) {
-            return UserModel.fromFirestore(snapshot);
-          } else {
-            throw Exception("User not found");
-          }
-        });
+    String uid = _auth.currentUser!.uid;
+    return _firestore.collection('users').doc(uid).snapshots().map((snapshot) {
+      if (snapshot.exists) {
+        return UserModel.fromFirestore(snapshot);
+      } else {
+        throw Exception("User not found");
+      }
+    });
   }
 
   // 2. Upload Image
   Future<String> uploadImage(String uid, File imageFile) async {
     try {
-      final ref = FirebaseStorage.instance.ref().child('users/$uid/profile.jpg');
+      final ref = FirebaseStorage.instance.ref().child(
+        'users/$uid/profile.jpg',
+      );
       await ref.putFile(imageFile);
       return await ref.getDownloadURL();
     } catch (e) {
@@ -44,6 +42,8 @@ class ProfileService {
   }) async {
     try {
       // --- LANGKAH 1: CEK KEUNIKAN USERNAME ---
+      
+      // Cari user lain yang punya username SAMA PERSIS
       final querySnapshot = await _firestore
           .collection('users')
           .where('username', isEqualTo: username)
@@ -107,12 +107,12 @@ class ProfileService {
     DateTime now = DateTime.now();
     DateTime startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     String startString = DateFormat('yyyy-MM-dd').format(startOfWeek);
-    
+
     try {
       QuerySnapshot snapshot = await _firestore
           .collection('daily_summaries')
           .where('userId', isEqualTo: uid)
-          .where('date', isGreaterThanOrEqualTo: startString) 
+          .where('date', isGreaterThanOrEqualTo: startString)
           .get();
 
       List<double> dailyTotals = List.filled(7, 0.0);
@@ -131,7 +131,7 @@ class ProfileService {
         }
       }
 
-      int daysPassed = now.weekday; 
+      int daysPassed = now.weekday;
       double averageSeconds = totalWeekSeconds / daysPassed;
 
       return {
