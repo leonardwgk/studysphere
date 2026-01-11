@@ -36,39 +36,53 @@ class ProfileService {
     }
   }
 
-  // 3. Update Profile (Firestore & Firebase Auth)
+// 3. Update Profile dengan Validasi Unik
   Future<void> updateProfile({
     required String uid,
     required String username,
-    // Parameter 'dob' SUDAH DIHAPUS
     String? photoUrl,
   }) async {
     try {
-      // A. Update Database (Firestore)
+      // --- LANGKAH 1: CEK KEUNIKAN USERNAME ---
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('username', isEqualTo: username)
+          .get();
+
+      // Jika ada hasilnya...
+      if (querySnapshot.docs.isNotEmpty) {
+        // Ambil dokumen pertama yang ditemukan
+        final existingUser = querySnapshot.docs.first;
+        
+        // Cek ID-nya. Kalau ID-nya BEDA dengan ID kita, berarti itu orang lain!
+        if (existingUser.id != uid) {
+          throw Exception("Username '$username' is already taken.");
+        }
+      }
+
+      // --- LANGKAH 2: JIKA LOLOS, LANJUT UPDATE ---
+
       Map<String, dynamic> data = {'username': username};
       if (photoUrl != null) data['photoUrl'] = photoUrl;
-      
+
+      // Update Firestore
       await _firestore.collection('users').doc(uid).update(data);
 
-      // B. Update Firebase Authentication (Akun Login)
+      // Update Auth (DisplayName & PhotoURL)
       User? user = _auth.currentUser;
       if (user != null) {
-        // Update Nama di Auth
         if (username != user.displayName) {
           await user.updateDisplayName(username);
         }
-        
-        // Update Foto di Auth (jika ada perubahan)
         if (photoUrl != null && photoUrl != user.photoURL) {
           await user.updatePhotoURL(photoUrl);
         }
-
-        // Refresh agar perubahan terbaca di aplikasi
-        await user.reload(); 
+        await user.reload();
       }
 
     } catch (e) {
-      throw Exception('Gagal update profile: $e');
+      // Lempar error agar bisa ditangkap oleh UI (EditProfilePage)
+      rethrow; 
     }
   }
 

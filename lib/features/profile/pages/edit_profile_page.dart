@@ -48,7 +48,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  Future<void> _saveProfile() async {
+Future<void> _saveProfile() async {
     setState(() => _isLoading = true);
 
     try {
@@ -57,29 +57,38 @@ class _EditProfilePageState extends State<EditProfilePage> {
       // Upload foto jika ada
       if (_selectedImage != null) {
         newPhotoUrl = await _profileService.uploadImage(
-          widget.user.uid,
-          _selectedImage!,
+          widget.user.uid, 
+          _selectedImage!
         );
       }
 
-      // Update Firestore & Firebase Auth
+      // Update Firestore (Akan otomatis cek unik di dalam service)
       await _profileService.updateProfile(
         uid: widget.user.uid,
-        username: _usernameController.text,
-        photoUrl: newPhotoUrl,
+        username: _usernameController.text.trim(), // Pakai trim() biar bersih
+        photoUrl: newPhotoUrl, 
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully!')),
+          const SnackBar(
+            content: Text('Profile updated successfully!'),
+            backgroundColor: Colors.green, // Kasih warna hijau kalau sukses
+          ),
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        // Bersihkan pesan error (hapus kata "Exception: ")
+        String errorMessage = e.toString().replaceAll("Exception: ", "");
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red, // Kasih warna merah kalau gagal
+          ),
+        );
       }
     } finally {
       if (mounted) {
