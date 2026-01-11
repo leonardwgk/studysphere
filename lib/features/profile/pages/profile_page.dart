@@ -49,8 +49,8 @@ class ProfilePage extends StatelessWidget {
                     const SizedBox(height: 30),
                     
                     // Nanti BadgesSection
-                    const BadgesSection(), 
-                    const SizedBox(height: 30),
+                    // const BadgesSection(), 
+                    // const SizedBox(height: 30),
 
                     // Weekly Report
                     const WeeklyReportSection(),

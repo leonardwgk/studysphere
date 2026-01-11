@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:intl/intl.dart'; // Pastikan sudah: flutter pub add intl
+import 'package:intl/intl.dart';
 import 'package:studysphere_app/features/auth/data/models/user_model.dart';
 
 class ProfileService {
@@ -36,23 +36,43 @@ class ProfileService {
     }
   }
 
-  // 3. Update Profile
+  // 3. Update Profile (Firestore & Firebase Auth)
   Future<void> updateProfile({
     required String uid,
     required String username,
-    required String? dob,
+    // Parameter 'dob' SUDAH DIHAPUS
     String? photoUrl,
   }) async {
     try {
-      Map<String, dynamic> data = {'username': username, 'dateOfBirth': dob};
+      // A. Update Database (Firestore)
+      Map<String, dynamic> data = {'username': username};
       if (photoUrl != null) data['photoUrl'] = photoUrl;
+      
       await _firestore.collection('users').doc(uid).update(data);
+
+      // B. Update Firebase Authentication (Akun Login)
+      User? user = _auth.currentUser;
+      if (user != null) {
+        // Update Nama di Auth
+        if (username != user.displayName) {
+          await user.updateDisplayName(username);
+        }
+        
+        // Update Foto di Auth (jika ada perubahan)
+        if (photoUrl != null && photoUrl != user.photoURL) {
+          await user.updatePhotoURL(photoUrl);
+        }
+
+        // Refresh agar perubahan terbaca di aplikasi
+        await user.reload(); 
+      }
+
     } catch (e) {
       throw Exception('Gagal update profile: $e');
     }
   }
 
-  // 4. Update Stats (Increment)
+  // 4. Update Stats
   Future<void> updateStudyStats({
     required String uid,
     required int additionalFocusTime,
@@ -68,51 +88,35 @@ class ProfileService {
     }
   }
 
-  // 5. AMBIL DATA DARI 'daily_summaries' (KODE BARU)
+  // 5. Get Weekly Progress
   Future<Map<String, dynamic>> getWeeklyProgress(String uid) async {
     DateTime now = DateTime.now();
-    // Cari hari Senin minggu ini
     DateTime startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    
-    // Format tanggal ke String "YYYY-MM-DD" agar cocok dengan StudyService
-    // Kita butuh range dari Senin sampai Minggu
     String startString = DateFormat('yyyy-MM-dd').format(startOfWeek);
     
     try {
-      // Query ke collection 'daily_summaries'
-      // Filter: userId user ini DAN tanggal >= hari Senin
       QuerySnapshot snapshot = await _firestore
           .collection('daily_summaries')
           .where('userId', isEqualTo: uid)
           .where('date', isGreaterThanOrEqualTo: startString) 
           .get();
 
-      // Siapkan wadah data 7 hari (0.0 detik)
       List<double> dailyTotals = List.filled(7, 0.0);
       double totalWeekSeconds = 0;
 
       for (var doc in snapshot.docs) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        
-        // Ambil string tanggal "2025-01-10"
         String dateStr = data['date'];
-        // Parse balik ke DateTime untuk tahu ini hari apa
         DateTime dateObj = DateFormat('yyyy-MM-dd').parse(dateStr);
-        
-        // Ambil 'dailyFocus' (sesuai field di StudyService kamu)
-        // Gunakan (num?) agar aman convert int/double
         double duration = (data['dailyFocus'] as num?)?.toDouble() ?? 0.0;
 
-        // Tentukan index (Senin=0 ... Minggu=6)
         int dayIndex = dateObj.weekday - 1;
-        
         if (dayIndex >= 0 && dayIndex < 7) {
-          dailyTotals[dayIndex] = duration; // Timpa/Isi data hari itu
+          dailyTotals[dayIndex] = duration;
           totalWeekSeconds += duration;
         }
       }
 
-      // Hitung rata-rata (dibagi hari yang sudah lewat)
       int daysPassed = now.weekday; 
       double averageSeconds = totalWeekSeconds / daysPassed;
 
@@ -125,7 +129,6 @@ class ProfileService {
       };
     } catch (e) {
       print("Error getting daily_summaries: $e");
-      // Jika error (misal index belum dibuat), return kosong
       return {
         'dailyTotals': List.filled(7, 0.0),
         'totalWeekSeconds': 0.0,
