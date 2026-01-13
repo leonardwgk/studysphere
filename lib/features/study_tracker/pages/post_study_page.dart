@@ -96,9 +96,13 @@ class _PostStudyPageState extends State<PostStudyPage> {
 
         if (!mounted) return;
 
-        // 3. REFRESH PROVIDER (Update statistik Home secara instan)
-        await userProvider.fetchUser(userProvider.user!.uid);
+        // 3. REFRESH PROVIDER
+        // Kita panggil initUserStream untuk memastikan data terbaru ter-load.
+        // Tidak perlu 'await' karena fungsi ini void.
+        userProvider.initUserStream();
 
+        if (!mounted) return;
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Session successfully shared!'),
@@ -175,9 +179,9 @@ class _PostStudyPageState extends State<PostStudyPage> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.05),
+                    color: Colors.blue.withValues(alpha: .05),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.blue.withOpacity(0.1)),
+                    border: Border.all(color: Colors.blue.withValues(alpha: .1)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:studysphere_app/features/auth/data/models/user_model.dart';
+import 'package:studysphere_app/features/profile/pages/edit_profile_page.dart';
 
 class ActionButtons extends StatelessWidget {
-  const ActionButtons({super.key});
+  final UserModel user;
+
+  const ActionButtons({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -10,7 +14,15 @@ class ActionButtons extends StatelessWidget {
         // Edit Profile
         Expanded(
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              // Implement edit profile logic here
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditProfilePage(user: user),
+                ),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,

@@ -239,7 +239,7 @@ class _PomodoroView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: .1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(status, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
@@ -275,7 +275,7 @@ class _PomodoroView extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: tp.isRunning ? [
             BoxShadow(
-              color: themeColor.withOpacity(0.4),
+              color: themeColor.withValues(alpha: .4),
               blurRadius: 20,
               spreadRadius: 2,
             )

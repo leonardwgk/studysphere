@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:studysphere_app/features/auth/data/models/user_model.dart';
 
 class AuthService {
@@ -33,12 +34,12 @@ class AuthService {
             .get();
 
         if (!userDoc.exists) {
-          print("DEBUG: Ghost user detected! Creating missing Firestore data...");
+          debugPrint("DEBUG: Ghost user detected! Creating missing Firestore data...");
           await _createUserFirestoreData(userCredential.user!);
-          print("DEBUG: Self-healing complete.");
+          debugPrint("DEBUG: Self-healing complete.");
         }
       } catch (e) {
-        print("ERROR: Self-healing check failed: $e");
+        debugPrint("ERROR: Self-healing check failed: $e");
       }
     }
 
@@ -60,14 +61,14 @@ class AuthService {
       // 2. Buat data di Firestore (Usernames + Users) via Transaksi
       await _createUserFirestoreData(userCredential.user!);
     } catch (e) {
-      print("DEBUG: Transaction failed with error: $e");
+      debugPrint("DEBUG: Transaction failed with error: $e");
 
       // Cleanup: Jika Firestore gagal, hapus akun Auth agar tidak 'nyangkut'
       try {
         await userCredential.user?.delete();
-        print("DEBUG: Auth user deleted successfully.");
+        debugPrint("DEBUG: Auth user deleted successfully.");
       } catch (deleteError) {
-        print("ERROR: Failed to delete user from Auth: $deleteError");
+        debugPrint("ERROR: Failed to delete user from Auth: $deleteError");
       }
       rethrow; // Lempar error ke UI agar bisa ditampilkan snackbar
     }
@@ -87,7 +88,7 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print("ERROR: Gagal mengambil data user: $e");
+      debugPrint("ERROR: Gagal mengambil data user: $e");
       return null;
     }
   }
@@ -149,11 +150,11 @@ class AuthService {
         }, timeout: const Duration(seconds: 10));
 
         uniqueUsernameCreated = true;
-        print("DEBUG: Username created: $finalUsername");
+        debugPrint("DEBUG: Username created: $finalUsername");
 
       } catch (e) {
         if (e.toString().contains("Username taken")) {
-          print("DEBUG: Username taken, retrying with suffix...");
+          debugPrint("DEBUG: Username taken, retrying with suffix...");
           finalUsername = "retry"; // Memicu generate angka random di loop berikutnya
           continue;
         }
