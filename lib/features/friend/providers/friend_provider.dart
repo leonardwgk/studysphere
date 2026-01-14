@@ -22,6 +22,7 @@ class FriendProvider extends ChangeNotifier {
     // 2. Jika text kosong, bersihkan hasil
     if (query.trim().isEmpty) {
       _searchResults = [];
+      _isLoading = false;
       notifyListeners();
       return;
     }
