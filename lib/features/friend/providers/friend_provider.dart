@@ -8,18 +8,46 @@ class FriendProvider extends ChangeNotifier {
 
   List<UserModel> _searchResults = [];
   bool _isLoading = false;
-  Timer? _debounce; // Timer untuk menunda pencarian
+  Timer? _debounce;
+
+  Set<String> _followingUids = {};
+  final Set<String> _loadingFollowUids = {};
+  bool _isFollowingDataLoaded = false;
 
   // Getters
   List<UserModel> get searchResults => _searchResults;
   bool get isLoading => _isLoading;
 
+  // Constructor
+  FriendProvider() {
+    _loadFollowingData();
+  }
+
+  // Muat data following dari service
+  Future<void> _loadFollowingData() async {
+    try {
+      _followingUids = await _friendService.getFollowingUids();
+      _isFollowingDataLoaded = true;
+      notifyListeners();
+    } catch (e) {
+      print("Error loading following data: $e");
+    }
+  }
+
+  // Refresh following data (dipanggil manual jika perlu)
+  Future<void> refreshFollowingData() async {
+    await _loadFollowingData();
+  }
+
+  // Cek apakah user sedang di-follow
+  bool isFollowing(String uid) {
+    return _followingUids.contains(uid);
+  }
+
   // Fungsi Search dengan Debounce
   void onSearchChanged(String query) {
-    // 1. Batalkan timer sebelumnya jika user masih mengetik
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-    // 2. Jika text kosong, bersihkan hasil
     if (query.trim().isEmpty) {
       _searchResults = [];
       _isLoading = false;
@@ -27,11 +55,9 @@ class FriendProvider extends ChangeNotifier {
       return;
     }
 
-    // 3. Set loading indicator lokal (biar UI responsif)
     _isLoading = true;
     notifyListeners();
 
-    // 4. Mulai timer baru (tunggu 500ms)
     _debounce = Timer(const Duration(milliseconds: 500), () async {
       await _performSearch(query);
     });
@@ -50,13 +76,52 @@ class FriendProvider extends ChangeNotifier {
     }
   }
 
+  // Toggle Follow/Unfollow
+  Future<void> toggleFollow(UserModel user) async {
+    // Cegah klik spam
+    if (_loadingFollowUids.contains(user.uid)) return;
+
+    _loadingFollowUids.add(user.uid);
+
+    final isCurrentlyFollowing = isFollowing(user.uid);
+
+    if (isCurrentlyFollowing) {
+      _followingUids.remove(user.uid);
+    } else {
+      _followingUids.add(user.uid);
+    }
+    notifyListeners();
+
+    try {
+      if (isCurrentlyFollowing) {
+        await _friendService.unfollowUser(user.uid);
+      } else {
+        await _friendService.followUser(user.uid);
+      }
+      
+    } catch (e) {
+      if (isCurrentlyFollowing) {
+        _followingUids.add(user.uid);
+      } else {
+        _followingUids.remove(user.uid);
+      }
+      notifyListeners();
+      print("Toggle follow error: $e");
+      
+      // Tampilkan error ke user
+      debugPrint("Failed to ${isCurrentlyFollowing ? 'unfollow' : 'follow'} user: $e");
+    } finally {
+      _loadingFollowUids.remove(user.uid);
+    }
+  }
+
   // Membersihkan hasil saat keluar halaman
   void clearSearch() {
     _searchResults = [];
     _isLoading = false;
-    notifyListeners(); // Optional, tergantung kebutuhan UI
+    notifyListeners();
   }
-  
+
   @override
   void dispose() {
     _debounce?.cancel();

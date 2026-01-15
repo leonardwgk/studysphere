@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:studysphere_app/features/friend/providers/friend_provider.dart';
-import 'package:studysphere_app/shared/widgets/custom_avatar.dart'; // Import CustomAvatar Anda
+import 'package:studysphere_app/shared/widgets/custom_avatar.dart';
+import 'package:studysphere_app/features/friend/pages/friend_profile_page.dart';
 
 class FriendPage extends StatefulWidget {
   const FriendPage({super.key});
@@ -21,7 +22,6 @@ class _FriendPageState extends State<FriendPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Akses provider
     final friendProvider = Provider.of<FriendProvider>(context);
 
     return Scaffold(
@@ -40,14 +40,14 @@ class _FriendPageState extends State<FriendPage> {
       ),
       body: Column(
         children: [
-          // --- 1. SEARCH BAR ---
+          // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
             child: TextField(
               controller: _searchController,
               onChanged: (value) {
-                // Panggil fungsi search di provider setiap user mengetik
                 friendProvider.onSearchChanged(value);
+                setState(() {}); // Update UI untuk clear button
               },
               decoration: InputDecoration(
                 hintText: 'Search username...',
@@ -57,7 +57,8 @@ class _FriendPageState extends State<FriendPage> {
                         icon: const Icon(Icons.clear, color: Colors.grey),
                         onPressed: () {
                           _searchController.clear();
-                          friendProvider.onSearchChanged(''); // Clear hasil
+                          friendProvider.onSearchChanged('');
+                          setState(() {});
                         },
                       )
                     : null,
@@ -72,13 +73,13 @@ class _FriendPageState extends State<FriendPage> {
             ),
           ),
 
-          // --- 2. SEARCH RESULT LIST ---
+          // Search Result List
           Expanded(
             child: friendProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : friendProvider.searchResults.isEmpty && _searchController.text.isNotEmpty
-                    ? _buildEmptyState() // State jika tidak ketemu
-                    : _buildUserList(friendProvider), // State List User
+                    ? _buildEmptyState()
+                    : _buildUserList(friendProvider),
           ),
         ],
       ),
@@ -107,11 +108,13 @@ class _FriendPageState extends State<FriendPage> {
       itemCount: provider.searchResults.length,
       itemBuilder: (context, index) {
         final user = provider.searchResults[index];
+        final isFollowing = provider.isFollowing(user.uid);
+
         return ListTile(
           leading: CustomAvatar(
             photoUrl: user.photoUrl,
             name: user.username,
-            radius: 24, // Sedikit lebih besar
+            radius: 24,
           ),
           title: Text(
             user.username,
@@ -119,22 +122,29 @@ class _FriendPageState extends State<FriendPage> {
           ),
           trailing: ElevatedButton(
             onPressed: () {
-              // TODO: Implementasi logika Follow nanti
-              print("Follow ${user.username}");
+              provider.toggleFollow(user);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
+              backgroundColor: isFollowing ? Colors.grey : Colors.blue,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-              minimumSize: const Size(0, 32), // Tinggi tombol compact
+              minimumSize: const Size(0, 32),
             ),
-            child: const Text('Follow', style: TextStyle(fontSize: 12)),
+            child: Text(
+              isFollowing ? 'Unfollow' : 'Follow',
+              style: const TextStyle(fontSize: 12),
+            ),
           ),
           onTap: () {
-            // TODO: Navigasi ke Profile Teman
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => FriendProfilePage(userId: user.uid),
+              ),
+            );
           },
         );
       },
