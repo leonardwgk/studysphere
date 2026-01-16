@@ -14,7 +14,7 @@ class StartStudyButton extends StatelessWidget {
           // Aksi ketika tombol ditekan
           Navigator.of(context).push(
             MaterialPageRoute(
-              // builder adalah fungsi yang mengembalikan widget 
+              // builder adalah fungsi yang mengembalikan widget
               builder: (BuildContext context) {
                 return const PomodoroPage();
               },

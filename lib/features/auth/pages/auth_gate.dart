@@ -25,18 +25,21 @@ class AuthGate extends StatelessWidget {
         // 2. If we have a user -> Go to Home
         if (snapshot.hasData) {
           final userId = snapshot.data!.uid;
-          
+
           // Fetch user data and preload calendar data when logged in
           WidgetsBinding.instance.addPostFrameCallback((_) {
             // --- PERBAIKAN DI SINI ---
             // Ganti fetchUser(userId) menjadi initUserStream()
             // Kita panggil ini untuk memastikan stream nyala saat login berhasil
             Provider.of<UserProvider>(context, listen: false).initUserStream();
-            
+
             // CalendarProvider biarkan tetap seperti ini (asumsi logic-nya belum diubah)
-            Provider.of<CalendarProvider>(context, listen: false).loadHomeData(userId);
+            Provider.of<CalendarProvider>(
+              context,
+              listen: false,
+            ).loadHomeData(userId);
           });
-          
+
           return const HomeGate();
         }
 

@@ -42,7 +42,10 @@ class _FriendPageState extends State<FriendPage> {
         children: [
           // Search Bar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 10.0,
+            ),
             child: TextField(
               controller: _searchController,
               onChanged: (value) {
@@ -77,9 +80,10 @@ class _FriendPageState extends State<FriendPage> {
           Expanded(
             child: friendProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : friendProvider.searchResults.isEmpty && _searchController.text.isNotEmpty
-                    ? _buildEmptyState()
-                    : _buildUserList(friendProvider),
+                : friendProvider.searchResults.isEmpty &&
+                      _searchController.text.isNotEmpty
+                ? _buildEmptyState()
+                : _buildUserList(friendProvider),
           ),
         ],
       ),
@@ -153,10 +157,7 @@ class _FriendPageState extends State<FriendPage> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Text(
-        "User not found.",
-        style: TextStyle(color: Colors.grey[500]),
-      ),
+      child: Text("User not found.", style: TextStyle(color: Colors.grey[500])),
     );
   }
 }

@@ -7,12 +7,9 @@ InputDecoration kGetTextFieldDecoration({
 }) {
   return InputDecoration(
     hintText: hintText,
-    prefixIcon: Icon(
-      icon,
-      color: Colors.grey[600],
-    ),
+    prefixIcon: Icon(icon, color: Colors.grey[600]),
     errorText: errorText, // Ambil dari parameter
-    
+
     filled: true,
     fillColor: Colors.grey[100],
     border: OutlineInputBorder(
@@ -29,10 +26,7 @@ InputDecoration kGetTextFieldDecoration({
     ),
     focusedErrorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12.0),
-      borderSide: const BorderSide(
-        color: Colors.blue,
-        width: 2,
-      ),
+      borderSide: const BorderSide(color: Colors.blue, width: 2),
     ),
     errorStyle: const TextStyle(color: Colors.red),
     errorMaxLines: 2,
