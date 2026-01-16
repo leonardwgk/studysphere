@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:vibration/vibration.dart';
-import '../data/models/session_type.dart';
+import '../data/session_type.dart';
 
 class TimerProvider with ChangeNotifier {
   // Pengaturan Waktu (Menit) - dengan batas validasi
@@ -12,7 +12,7 @@ class TimerProvider with ChangeNotifier {
 
   int _focusMinutes = 25;
   int _shortBreakMinutes = 5;
-  
+
   // State Timer
   Timer? _timer;
   int _secondsRemaining = 25 * 60;
@@ -29,7 +29,7 @@ class TimerProvider with ChangeNotifier {
   int _completedPomodoros = 0; // Jumlah pomodoro yang selesai penuh
 
   // variabel subjek dan daftar kategori
-  String _subject = "Matematika"; 
+  String _subject = "Matematika";
   final List<String> _categories = [
     "Matematika",
     "Fisika",
@@ -38,7 +38,7 @@ class TimerProvider with ChangeNotifier {
     "Sejarah",
     "Bahasa Inggris",
     "Bahasa Indonesia",
-    "Lainnya"
+    "Lainnya",
   ];
 
   // Getters
@@ -59,8 +59,8 @@ class TimerProvider with ChangeNotifier {
   }
 
   double get progress {
-    int total = _sessionType == SessionType.focus 
-        ? _focusMinutes * 60 
+    int total = _sessionType == SessionType.focus
+        ? _focusMinutes * 60
         : _shortBreakMinutes * 60;
     return (_secondsRemaining / total).clamp(0.0, 1.0);
   }
@@ -126,15 +126,15 @@ class TimerProvider with ChangeNotifier {
     _timer?.cancel();
     _isRunning = false;
     // Reset timer ke durasi awal sesuai tipe sesi
-    _secondsRemaining = _sessionType == SessionType.focus 
-        ? _focusMinutes * 60 
+    _secondsRemaining = _sessionType == SessionType.focus
+        ? _focusMinutes * 60
         : _shortBreakMinutes * 60;
     notifyListeners();
   }
 
   Future<void> _handleSessionSwitch() async {
     pauseTimer();
-    
+
     // Trigger vibration untuk notifikasi transisi
     if (await Vibration.hasVibrator()) {
       // Pattern: vibrate-pause-vibrate untuk notifikasi yang jelas

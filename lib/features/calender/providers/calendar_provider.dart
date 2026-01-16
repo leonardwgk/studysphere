@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:studysphere_app/features/calender/services/calendar_service.dart';
-import 'package:studysphere_app/features/home/data/models/summary_model.dart';
+import 'package:studysphere_app/shared/models/summary_model.dart';
 
 /// CalendarProvider with intelligent caching to minimize Firestore API calls.
 ///

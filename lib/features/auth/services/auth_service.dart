@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/auth/data/models/user_model.dart';
+import 'package:studysphere_app/shared/models/user_model.dart';
 
 class AuthService {
   // Instance Firebase
@@ -34,7 +34,9 @@ class AuthService {
             .get();
 
         if (!userDoc.exists) {
-          debugPrint("DEBUG: Ghost user detected! Creating missing Firestore data...");
+          debugPrint(
+            "DEBUG: Ghost user detected! Creating missing Firestore data...",
+          );
           await _createUserFirestoreData(userCredential.user!);
           debugPrint("DEBUG: Self-healing complete.");
         }
@@ -116,7 +118,9 @@ class AuthService {
               .collection('usernames')
               .doc(candidateUsername);
 
-          DocumentSnapshot usernameSnapshot = await transaction.get(usernameRef);
+          DocumentSnapshot usernameSnapshot = await transaction.get(
+            usernameRef,
+          );
 
           if (usernameSnapshot.exists) {
             finalUsername = "taken"; // Trigger untuk generate angka random
@@ -137,7 +141,7 @@ class AuthService {
             'email': email,
             'username': candidateUsername,
             'photoUrl': '',
-            'searchKeywords': [candidateUsername.toLowerCase()], 
+            'searchKeywords': [candidateUsername.toLowerCase()],
             'totalFocusTime': 0,
             'totalBreakTime': 0,
             'followingCount': 0,
@@ -151,11 +155,11 @@ class AuthService {
 
         uniqueUsernameCreated = true;
         debugPrint("DEBUG: Username created: $finalUsername");
-
       } catch (e) {
         if (e.toString().contains("Username taken")) {
           debugPrint("DEBUG: Username taken, retrying with suffix...");
-          finalUsername = "retry"; // Memicu generate angka random di loop berikutnya
+          finalUsername =
+              "retry"; // Memicu generate angka random di loop berikutnya
           continue;
         }
         rethrow;
@@ -182,8 +186,14 @@ class AuthService {
     await _currentUser!.updateDisplayName(username);
   }
 
-  Future<void> deleteAccount({required String email, required String password}) async {
-    AuthCredential credential = EmailAuthProvider.credential(email: email, password: password);
+  Future<void> deleteAccount({
+    required String email,
+    required String password,
+  }) async {
+    AuthCredential credential = EmailAuthProvider.credential(
+      email: email,
+      password: password,
+    );
     await _currentUser!.reauthenticateWithCredential(credential);
     await _currentUser!.delete();
     await _auth.signOut();
@@ -194,7 +204,10 @@ class AuthService {
     required String newPassword,
     required String email,
   }) async {
-    AuthCredential credential = EmailAuthProvider.credential(email: email, password: currentPassword);
+    AuthCredential credential = EmailAuthProvider.credential(
+      email: email,
+      password: currentPassword,
+    );
     await _currentUser!.reauthenticateWithCredential(credential);
     await _currentUser!.updatePassword(newPassword);
   }

@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:studysphere_app/features/auth/data/models/user_model.dart';
+import 'package:studysphere_app/shared/models/user_model.dart';
 import 'package:studysphere_app/features/friend/providers/friend_provider.dart';
 import 'package:studysphere_app/features/friend/services/friend_profile_service.dart';
 import 'package:studysphere_app/features/profile/widgets/profile_header.dart';
@@ -12,10 +12,7 @@ import 'package:studysphere_app/features/profile/widgets/weekly_report_section.d
 class FriendProfilePage extends StatelessWidget {
   final String userId;
 
-  const FriendProfilePage({
-    super.key,
-    required this.userId,
-  });
+  const FriendProfilePage({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +71,9 @@ class FriendProfilePage extends StatelessWidget {
                       // FOLLOW / UNFOLLOW BUTTON
                       Consumer<FriendProvider>(
                         builder: (context, provider, _) {
-                          final isFollowing = provider.isFollowing(friendUser.uid);
+                          final isFollowing = provider.isFollowing(
+                            friendUser.uid,
+                          );
 
                           return SizedBox(
                             width: double.infinity,

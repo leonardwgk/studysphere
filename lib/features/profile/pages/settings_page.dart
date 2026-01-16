@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:studysphere_app/features/profile/providers/settings_providers.dart';
+import 'package:studysphere_app/features/profile/providers/settings_provider.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -8,7 +8,7 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => SettingsViewModel(),
+      create: (_) => SettingsProvider(),
       child: const _SettingsPageContent(),
     );
   }
@@ -111,7 +111,7 @@ class _SettingsPageContent extends StatelessWidget {
                 //     // Aksi hapus akun
                 //   },
                 // ),
-                Consumer<SettingsViewModel>(
+                Consumer<SettingsProvider>(
                   builder: (context, viewModel, child) {
                     return _buildSettingsItem(
                       icon: Icons.logout, // Icon logout panah keluar

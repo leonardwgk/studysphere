@@ -7,8 +7,11 @@ class SummaryModel {
   final List<String> labelsStudied;
 
   SummaryModel({
-    required this.userId, required this.date,
-    this.dailyFocus = 0, this.dailyBreak = 0, this.dailyTotal = 0,
+    required this.userId,
+    required this.date,
+    this.dailyFocus = 0,
+    this.dailyBreak = 0,
+    this.dailyTotal = 0,
     this.labelsStudied = const [],
   });
 

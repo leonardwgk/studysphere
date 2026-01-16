@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:studysphere_app/features/auth/services/auth_service.dart';
 import 'package:studysphere_app/features/auth/providers/user_provider.dart';
 
-class SettingsViewModel extends ChangeNotifier {
+class SettingsProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
 
   Future<void> logout(BuildContext context) async {

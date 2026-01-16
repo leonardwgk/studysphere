@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/home/data/models/summary_model.dart';
+import 'package:studysphere_app/shared/models/summary_model.dart';
 
 class CalendarService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;

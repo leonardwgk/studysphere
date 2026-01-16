@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/timer_provider.dart';
-import '../data/models/session_type.dart';
+import '../data/session_type.dart';
 
 class StudyTimerPage extends StatelessWidget {
   const StudyTimerPage({super.key});
@@ -22,16 +22,23 @@ class StudyTimerPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(tp.sessionType == SessionType.focus ? "Focusing..." : "Breaking..."),
+              Text(
+                tp.sessionType == SessionType.focus
+                    ? "Focusing..."
+                    : "Breaking...",
+              ),
               Text(
                 tp.timeString,
-                style: const TextStyle(fontSize: 80, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 80,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () => _handleExit(context, tp),
                 child: const Text("Stop Studying"),
-              )
+              ),
             ],
           ),
         ),
@@ -45,7 +52,10 @@ class StudyTimerPage extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text("Stop Studying?"),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
           ElevatedButton(
             onPressed: () {
               tp.stopTimer();

@@ -1,7 +1,7 @@
 // lib/features/profile/pages/profile_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/auth/data/models/user_model.dart';
+import 'package:studysphere_app/shared/models/user_model.dart';
 import 'package:studysphere_app/features/profile/services/profile_service.dart'; // Import Service
 import 'package:studysphere_app/features/profile/widgets/action_buttons.dart';
 import 'package:studysphere_app/features/profile/widgets/profile_header.dart';

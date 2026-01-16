@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:studysphere_app/features/auth/providers/user_provider.dart';
 import 'package:studysphere_app/features/calender/providers/calendar_provider.dart';
-import 'package:studysphere_app/features/home/data/models/summary_model.dart';
+import 'package:studysphere_app/shared/models/summary_model.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});

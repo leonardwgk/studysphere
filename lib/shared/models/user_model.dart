@@ -57,7 +57,7 @@ class UserModel {
       followingCount: map['followingCount'] ?? 0,
       followersCount: map['followersCount'] ?? 0,
       badges: List<String>.from(map['badges'] ?? []),
-      
+
       // Mengambil createdAt dan mengubahnya dari Timestamp ke DateTime
       createdAt: map['createdAt'] != null
           ? (map['createdAt'] as Timestamp).toDate()

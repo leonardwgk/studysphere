@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:studysphere_app/features/auth/data/models/user_model.dart';
+import 'package:studysphere_app/shared/models/user_model.dart';
 import 'package:studysphere_app/features/profile/services/profile_service.dart';
 import 'package:flutter/services.dart';
 
@@ -48,7 +48,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-Future<void> _saveProfile() async {
+  Future<void> _saveProfile() async {
     setState(() => _isLoading = true);
 
     try {
@@ -57,8 +57,8 @@ Future<void> _saveProfile() async {
       // Upload foto jika ada
       if (_selectedImage != null) {
         newPhotoUrl = await _profileService.uploadImage(
-          widget.user.uid, 
-          _selectedImage!
+          widget.user.uid,
+          _selectedImage!,
         );
       }
 
@@ -66,7 +66,7 @@ Future<void> _saveProfile() async {
       await _profileService.updateProfile(
         uid: widget.user.uid,
         username: _usernameController.text.trim(), // Pakai trim() biar bersih
-        photoUrl: newPhotoUrl, 
+        photoUrl: newPhotoUrl,
       );
 
       if (mounted) {
@@ -82,7 +82,7 @@ Future<void> _saveProfile() async {
       if (mounted) {
         // Bersihkan pesan error (hapus kata "Exception: ")
         String errorMessage = e.toString().replaceAll("Exception: ", "");
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
