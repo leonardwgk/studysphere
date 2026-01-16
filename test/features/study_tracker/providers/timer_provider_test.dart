@@ -9,7 +9,7 @@ void main() {
     late TimerProvider timerProvider;
 
     setUp(() {
-      timerProvider = TimerProvider();
+      timerProvider = TimerProvider(enableNotifications: false);
     });
 
     tearDown(() {

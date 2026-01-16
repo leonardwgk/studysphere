@@ -5,8 +5,12 @@ import '../data/session_type.dart';
 import '../services/notification_service.dart';
 
 class TimerProvider with ChangeNotifier {
-  // Notification service for background timer
-  final NotificationService _notificationService = NotificationService();
+  // Notification service (null when disabled for tests)
+  final NotificationService? _notificationService;
+
+  /// Constructor - set enableNotifications to false for tests
+  TimerProvider({bool enableNotifications = true})
+    : _notificationService = enableNotifications ? NotificationService() : null;
 
   // Pengaturan Waktu (Menit) - dengan batas validasi
   static const int minFocusMinutes = 1;
@@ -115,23 +119,27 @@ class TimerProvider with ChangeNotifier {
 
   // Helper: Update notification with current timer state
   void _updateNotification() {
-    String title;
-    switch (_sessionType) {
-      case SessionType.focus:
-        title = '🎯 Focus Time';
-        break;
-      case SessionType.shortBreak:
-        title = '☕ Short Break';
-        break;
-      case SessionType.longBreak:
-        title = '🌿 Long Break';
-        break;
+    try {
+      String title;
+      switch (_sessionType) {
+        case SessionType.focus:
+          title = '🎯 Focus Time';
+          break;
+        case SessionType.shortBreak:
+          title = '☕ Short Break';
+          break;
+        case SessionType.longBreak:
+          title = '🌿 Long Break';
+          break;
+      }
+      _notificationService?.showTimerNotification(
+        title: title,
+        timeRemaining: timeString,
+        isRunning: _isRunning,
+      );
+    } catch (_) {
+      // Ignore notification errors (e.g., in tests without plugin binding)
     }
-    _notificationService.showTimerNotification(
-      title: title,
-      timeRemaining: timeString,
-      isRunning: _isRunning,
-    );
   }
 
   // Kontrol Timer
@@ -171,7 +179,11 @@ class TimerProvider with ChangeNotifier {
   void stopTimer() {
     _timer?.cancel();
     _isRunning = false;
-    _notificationService.cancelNotification(); // Remove notification
+    try {
+      _notificationService?.cancelNotification();
+    } catch (_) {
+      // Ignore in tests
+    }
     // Reset timer ke durasi awal sesuai tipe sesi
     _secondsRemaining = _sessionType == SessionType.focus
         ? _focusMinutes * 60
