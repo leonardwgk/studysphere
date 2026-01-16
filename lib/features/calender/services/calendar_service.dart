@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:studysphere_app/shared/models/summary_model.dart';
 
 class CalendarService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db;
+
+  /// Constructor with optional Firestore injection for testability
+  CalendarService({FirebaseFirestore? firestore})
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   /// Ambil summary untuk hari ini
   Future<SummaryModel?> getTodaySummary(String userId) async {

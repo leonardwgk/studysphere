@@ -5,7 +5,11 @@ import 'package:studysphere_app/shared/models/post_model.dart';
 /// HomeService handles social feed-related data operations.
 /// Following feature-first architecture, feed logic lives in home feature.
 class HomeService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db;
+
+  /// Constructor with optional Firestore injection for testability
+  HomeService({FirebaseFirestore? firestore})
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   /// Fetch social feed posts from all users (Global Feed)
   Future<List<PostModel>> getFeedPosts() async {
