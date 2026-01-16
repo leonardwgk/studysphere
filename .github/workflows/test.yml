@@ -24,6 +24,19 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Create Firebase options stub (gitignored)
+        run: |
+          cat > lib/firebase_options.dart << 'EOF'
+          // Stub file for CI - real file is gitignored
+          import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+          import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform => const FirebaseOptions(
+              apiKey: 'stub', appId: 'stub', messagingSenderId: 'stub', projectId: 'stub',
+            );
+          }
+          EOF
+
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
 
