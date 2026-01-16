@@ -20,41 +20,74 @@ class PomodoroPage extends StatelessWidget {
 class _PomodoroView extends StatelessWidget {
   const _PomodoroView();
 
+  // Color scheme for different session types
+  static const Color _focusColor = Color(0xFFFF6B6B); // Warm red-orange
+  static const Color _focusBgColor = Color(0xFFFFE8E8); // Light red bg
+  static const Color _shortBreakColor = Color(0xFF4ECDC4); // Teal
+  static const Color _shortBreakBgColor = Color(0xFFE8F8F7); // Light teal bg
+  static const Color _longBreakColor = Color(0xFF45B7D1); // Deep blue
+  static const Color _longBreakBgColor = Color(0xFFE8F4F8); // Light blue bg
+
   @override
   Widget build(BuildContext context) {
     final tp = context.watch<TimerProvider>();
 
-    // UI Logic untuk warna berdasarkan session type
-    final bool isFocusMode = tp.sessionType == SessionType.focus;
-    Color themeColor = isFocusMode ? Colors.black : Colors.green;
-    Color backgroundColor = isFocusMode
-        ? Colors.white
-        : const Color(0xFFE8F5E9);
-    String statusText = isFocusMode ? "Focus Time" : "Break Time";
+    // Dynamic colors based on session type
+    final Color themeColor;
+    final Color backgroundColor;
+    final String statusText;
+
+    switch (tp.sessionType) {
+      case SessionType.focus:
+        themeColor = _focusColor;
+        backgroundColor = tp.isRunning ? _focusBgColor : Colors.white;
+        statusText = "Focus Time";
+        break;
+      case SessionType.shortBreak:
+        themeColor = _shortBreakColor;
+        backgroundColor = _shortBreakBgColor;
+        statusText = "Short Break";
+        break;
+      case SessionType.longBreak:
+        themeColor = _longBreakColor;
+        backgroundColor = _longBreakBgColor;
+        statusText = "Long Break";
+        break;
+    }
 
     return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Stack(
-        children: [
-          _buildBackground(),
-          SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(context, tp),
-                const SizedBox(height: 10),
-                _buildIterationBadge(tp),
-                const SizedBox(height: 10),
-                _buildSubjectTitle(context, tp),
-                const Spacer(),
-                _buildTimerCircle(tp, themeColor, statusText),
-                const Spacer(),
-                _buildControls(context, tp, themeColor),
-                const SizedBox(height: 20),
-                _buildStopButton(context, tp),
-              ],
-            ),
+      body: AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [backgroundColor, backgroundColor.withValues(alpha: 0.7)],
           ),
-        ],
+        ),
+        child: Stack(
+          children: [
+            _buildBackground(),
+            SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(context, tp, themeColor),
+                  const SizedBox(height: 10),
+                  _buildIterationBadge(tp, themeColor),
+                  const SizedBox(height: 10),
+                  _buildSubjectTitle(context, tp),
+                  const Spacer(),
+                  _buildTimerCircle(tp, themeColor, statusText),
+                  const Spacer(),
+                  _buildControls(context, tp, themeColor),
+                  const SizedBox(height: 20),
+                  _buildStopButton(context, tp),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -74,11 +107,11 @@ class _PomodoroView extends StatelessWidget {
     );
   }
 
-  Widget _buildIterationBadge(TimerProvider tp) {
+  Widget _buildIterationBadge(TimerProvider tp, Color themeColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -99,7 +132,7 @@ class _PomodoroView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.green,
+                color: themeColor,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -117,7 +150,11 @@ class _PomodoroView extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, TimerProvider tp) {
+  Widget _buildHeader(
+    BuildContext context,
+    TimerProvider tp,
+    Color themeColor,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
       child: Row(

@@ -52,6 +52,7 @@ dependencies:
   flutter_image_compress: ^2.4.0
   path_provider: ^2.1.5
   intl: ^0.20.2
+  flutter_local_notifications: ^18.0.1
 
 dev_dependencies:
   flutter_test:
