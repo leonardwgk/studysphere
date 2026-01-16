@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:studysphere_app/features/auth/data/models/user_model.dart';
 import 'package:studysphere_app/features/profile/services/profile_service.dart'; // Import Service
 import 'package:studysphere_app/features/profile/widgets/action_buttons.dart';
-import 'package:studysphere_app/features/profile/widgets/badges_section.dart';
 import 'package:studysphere_app/features/profile/widgets/profile_header.dart';
 import 'package:studysphere_app/features/profile/widgets/weekly_report_section.dart';
 
@@ -36,20 +35,23 @@ class ProfilePage extends StatelessWidget {
 
             return SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 10.0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Kirim data user ke Header
-                    ProfileHeader(user: currentUser), 
+                    ProfileHeader(user: currentUser),
                     const SizedBox(height: 20),
 
                     // Share dan Edit
                     ActionButtons(user: currentUser),
                     const SizedBox(height: 30),
-                    
+
                     // Nanti BadgesSection
-                    // const BadgesSection(), 
+                    // const BadgesSection(),
                     // const SizedBox(height: 30),
 
                     // Weekly Report

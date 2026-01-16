@@ -31,19 +31,7 @@ class StudyService {
     final dateStr =
         "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 
-    // 1. Tambah ke koleksi 'sessions'
-    final sessionRef = _db.collection('sessions').doc();
-    batch.set(sessionRef, {
-      'userId': _uid,
-      'focusDuration': focusTime,
-      'breakDuration': breakTime,
-      'totalDuration': focusTime + breakTime,
-      'label': label,
-      'description': description ?? '',
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-
-    // 2. Update/Set 'daily_summaries'
+    // 1. Update/Set 'daily_summaries'
     final summaryRef = _db
         .collection('daily_summaries')
         .doc('${_uid}_$dateStr');
@@ -56,14 +44,14 @@ class StudyService {
       'labelsStudied': FieldValue.arrayUnion([label]),
     }, SetOptions(merge: true));
 
-    // 3. Update total di 'users'
+    // 2. Update total di 'users'
     final userRef = _db.collection('users').doc(_uid);
     batch.update(userRef, {
       'totalFocusTime': FieldValue.increment(focusTime),
       'totalBreakTime': FieldValue.increment(breakTime),
     });
 
-    // 4. Tambah ke koleksi 'posts'
+    // 3. Tambah ke koleksi 'posts'
     final postRef = _db.collection('posts').doc();
     batch.set(postRef, {
       'userId': user.uid,

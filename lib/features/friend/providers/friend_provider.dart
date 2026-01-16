@@ -12,7 +12,6 @@ class FriendProvider extends ChangeNotifier {
 
   Set<String> _followingUids = {};
   final Set<String> _loadingFollowUids = {};
-  bool _isFollowingDataLoaded = false;
 
   // Getters
   List<UserModel> get searchResults => _searchResults;
@@ -27,7 +26,6 @@ class FriendProvider extends ChangeNotifier {
   Future<void> _loadFollowingData() async {
     try {
       _followingUids = await _friendService.getFollowingUids();
-      _isFollowingDataLoaded = true;
       notifyListeners();
     } catch (e) {
       print("Error loading following data: $e");
@@ -98,7 +96,6 @@ class FriendProvider extends ChangeNotifier {
       } else {
         await _friendService.followUser(user.uid);
       }
-      
     } catch (e) {
       if (isCurrentlyFollowing) {
         _followingUids.add(user.uid);
@@ -107,9 +104,11 @@ class FriendProvider extends ChangeNotifier {
       }
       notifyListeners();
       print("Toggle follow error: $e");
-      
+
       // Tampilkan error ke user
-      debugPrint("Failed to ${isCurrentlyFollowing ? 'unfollow' : 'follow'} user: $e");
+      debugPrint(
+        "Failed to ${isCurrentlyFollowing ? 'unfollow' : 'follow'} user: $e",
+      );
     } finally {
       _loadingFollowUids.remove(user.uid);
     }
