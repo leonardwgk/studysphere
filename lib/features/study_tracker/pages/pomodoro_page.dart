@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vibration/vibration.dart';
 import '../providers/timer_provider.dart';
-import '../data/models/session_type.dart';
+import '../data/session_type.dart';
 import 'post_study_page.dart';
 
 class PomodoroPage extends StatelessWidget {
@@ -20,39 +20,74 @@ class PomodoroPage extends StatelessWidget {
 class _PomodoroView extends StatelessWidget {
   const _PomodoroView();
 
+  // Color scheme for different session types
+  static const Color _focusColor = Color(0xFFFF6B6B); // Warm red-orange
+  static const Color _focusBgColor = Color(0xFFFFE8E8); // Light red bg
+  static const Color _shortBreakColor = Color(0xFF4ECDC4); // Teal
+  static const Color _shortBreakBgColor = Color(0xFFE8F8F7); // Light teal bg
+  static const Color _longBreakColor = Color(0xFF45B7D1); // Deep blue
+  static const Color _longBreakBgColor = Color(0xFFE8F4F8); // Light blue bg
+
   @override
   Widget build(BuildContext context) {
     final tp = context.watch<TimerProvider>();
 
-    // UI Logic untuk warna berdasarkan session type
-    final bool isFocusMode = tp.sessionType == SessionType.focus;
-    Color themeColor = isFocusMode ? Colors.black : Colors.green;
-    Color backgroundColor = isFocusMode ? Colors.white : const Color(0xFFE8F5E9);
-    String statusText = isFocusMode ? "Focus Time" : "Break Time";
+    // Dynamic colors based on session type
+    final Color themeColor;
+    final Color backgroundColor;
+    final String statusText;
+
+    switch (tp.sessionType) {
+      case SessionType.focus:
+        themeColor = _focusColor;
+        backgroundColor = tp.isRunning ? _focusBgColor : Colors.white;
+        statusText = "Focus Time";
+        break;
+      case SessionType.shortBreak:
+        themeColor = _shortBreakColor;
+        backgroundColor = _shortBreakBgColor;
+        statusText = "Short Break";
+        break;
+      case SessionType.longBreak:
+        themeColor = _longBreakColor;
+        backgroundColor = _longBreakBgColor;
+        statusText = "Long Break";
+        break;
+    }
 
     return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Stack(
-        children: [
-          _buildBackground(),
-          SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(context, tp),
-                const SizedBox(height: 10),
-                _buildIterationBadge(tp),
-                const SizedBox(height: 10),
-                _buildSubjectTitle(context, tp),
-                const Spacer(),
-                _buildTimerCircle(tp, themeColor, statusText),
-                const Spacer(),
-                _buildControls(context, tp, themeColor),
-                const SizedBox(height: 20),
-                _buildStopButton(context, tp),
-              ],
-            ),
+      body: AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [backgroundColor, backgroundColor.withValues(alpha: 0.7)],
           ),
-        ],
+        ),
+        child: Stack(
+          children: [
+            _buildBackground(),
+            SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(context, tp, themeColor),
+                  const SizedBox(height: 10),
+                  _buildIterationBadge(tp, themeColor),
+                  const SizedBox(height: 10),
+                  _buildSubjectTitle(context, tp),
+                  const Spacer(),
+                  _buildTimerCircle(tp, themeColor, statusText),
+                  const Spacer(),
+                  _buildControls(context, tp, themeColor),
+                  const SizedBox(height: 20),
+                  _buildStopButton(context, tp),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -63,17 +98,20 @@ class _PomodoroView extends StatelessWidget {
     return Positioned.fill(
       child: Opacity(
         opacity: 0.05,
-        child: Image.asset('assets/images/wavy_bg.png', fit: BoxFit.cover,
-            errorBuilder: (c, o, s) => Container()),
+        child: Image.asset(
+          'assets/images/wavy_bg.png',
+          fit: BoxFit.cover,
+          errorBuilder: (c, o, s) => Container(),
+        ),
       ),
     );
   }
 
-  Widget _buildIterationBadge(TimerProvider tp) {
+  Widget _buildIterationBadge(TimerProvider tp, Color themeColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -94,12 +132,16 @@ class _PomodoroView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.green,
+                color: themeColor,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 "✓ ${tp.completedPomodoros}",
-                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -108,7 +150,11 @@ class _PomodoroView extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, TimerProvider tp) {
+  Widget _buildHeader(
+    BuildContext context,
+    TimerProvider tp,
+    Color themeColor,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
       child: Row(
@@ -136,9 +182,14 @@ class _PomodoroView extends StatelessWidget {
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text("Keluar dari Sesi?"),
-          content: const Text("Progress belajar Anda akan hilang jika keluar sekarang."),
+          content: const Text(
+            "Progress belajar Anda akan hilang jika keluar sekarang.",
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Batal")),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Batal"),
+            ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () {
@@ -160,14 +211,21 @@ class _PomodoroView extends StatelessWidget {
       onTap: () => _showSubjectPicker(context, tp), // Klik untuk ganti
       child: Column(
         children: [
-          const Text("#Individually Studying", 
-              style: TextStyle(color: Colors.grey, fontSize: 14)),
+          const Text(
+            "#Individually Studying",
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(tp.subject, 
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+              Text(
+                tp.subject,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(width: 8),
               const Icon(Icons.edit_outlined, size: 20, color: Colors.grey),
             ],
@@ -178,53 +236,56 @@ class _PomodoroView extends StatelessWidget {
   }
 
   void _showSubjectPicker(BuildContext context, TimerProvider tp) {
-  showModalBottomSheet(
-    context: context,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-    ),
-    builder: (ctx) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text("Pilih Mata Pelajaran", 
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            // List daftar kategori dari Provider
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: tp.categories.length,
-                itemBuilder: (context, index) {
-                  final cat = tp.categories[index];
-                  return ListTile(
-                    title: Text(cat),
-                    trailing: tp.subject == cat 
-                        ? const Icon(Icons.check_circle, color: Colors.black) 
-                        : null,
-                    onTap: () {
-                      tp.setSubject(cat);
-                      Navigator.pop(context);
-                    },
-                  );
-                },
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Pilih Mata Pelajaran",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+              const SizedBox(height: 16),
+              // List daftar kategori dari Provider
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: tp.categories.length,
+                  itemBuilder: (context, index) {
+                    final cat = tp.categories[index];
+                    return ListTile(
+                      title: Text(cat),
+                      trailing: tp.subject == cat
+                          ? const Icon(Icons.check_circle, color: Colors.black)
+                          : null,
+                      onTap: () {
+                        tp.setSubject(cat);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildTimerCircle(TimerProvider tp, Color color, String status) {
     return Stack(
       alignment: Alignment.center,
       children: [
         SizedBox(
-          width: 280, height: 280,
+          width: 280,
+          height: 280,
           child: CircularProgressIndicator(
             value: tp.progress,
             strokeWidth: 15,
@@ -242,18 +303,27 @@ class _PomodoroView extends StatelessWidget {
                 color: color.withValues(alpha: .1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(status, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+              child: Text(
+                status,
+                style: TextStyle(color: color, fontWeight: FontWeight.w600),
+              ),
             ),
             const SizedBox(height: 8),
-            Text(tp.timeString, 
-                style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold)),
+            Text(
+              tp.timeString,
+              style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildControls(BuildContext context, TimerProvider tp, Color themeColor) {
+  Widget _buildControls(
+    BuildContext context,
+    TimerProvider tp,
+    Color themeColor,
+  ) {
     return GestureDetector(
       onTap: () async {
         if (tp.isRunning) {
@@ -268,21 +338,26 @@ class _PomodoroView extends StatelessWidget {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: 80, 
+        width: 80,
         height: 80,
         decoration: BoxDecoration(
           color: themeColor,
           shape: BoxShape.circle,
-          boxShadow: tp.isRunning ? [
-            BoxShadow(
-              color: themeColor.withValues(alpha: .4),
-              blurRadius: 20,
-              spreadRadius: 2,
-            )
-          ] : null,
+          boxShadow: tp.isRunning
+              ? [
+                  BoxShadow(
+                    color: themeColor.withValues(alpha: .4),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
         ),
-        child: Icon(tp.isRunning ? Icons.pause : Icons.play_arrow, 
-            color: Colors.white, size: 40),
+        child: Icon(
+          tp.isRunning ? Icons.pause : Icons.play_arrow,
+          color: Colors.white,
+          size: 40,
+        ),
       ),
     );
   }
@@ -297,10 +372,15 @@ class _PomodoroView extends StatelessWidget {
           backgroundColor: Colors.red[50],
           foregroundColor: Colors.red,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
-        child: const Text("Finish Session", style: TextStyle(fontWeight: FontWeight.bold)),
+        child: const Text(
+          "Finish Session",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
@@ -314,7 +394,9 @@ class _PomodoroView extends StatelessWidget {
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text("Belum Ada Sesi"),
-          content: const Text("Anda belum memulai focus time. Mulai timer terlebih dahulu sebelum menyelesaikan sesi."),
+          content: const Text(
+            "Anda belum memulai focus time. Mulai timer terlebih dahulu sebelum menyelesaikan sesi.",
+          ),
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx),
@@ -336,15 +418,30 @@ class _PomodoroView extends StatelessWidget {
           children: [
             const Text("Ringkasan sesi Anda:"),
             const SizedBox(height: 12),
-            _buildSummaryRow(Icons.timer, "Focus Time", _formatDuration(tp.totalFocusElapsed)),
+            _buildSummaryRow(
+              Icons.timer,
+              "Focus Time",
+              _formatDuration(tp.totalFocusElapsed),
+            ),
             const SizedBox(height: 8),
-            _buildSummaryRow(Icons.coffee, "Break Time", _formatDuration(tp.totalBreakElapsed)),
+            _buildSummaryRow(
+              Icons.coffee,
+              "Break Time",
+              _formatDuration(tp.totalBreakElapsed),
+            ),
             const SizedBox(height: 8),
-            _buildSummaryRow(Icons.check_circle, "Pomodoro Selesai", "${tp.completedPomodoros}"),
+            _buildSummaryRow(
+              Icons.check_circle,
+              "Pomodoro Selesai",
+              "${tp.completedPomodoros}",
+            ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Batal")),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Batal"),
+          ),
           ElevatedButton(
             onPressed: () {
               int focus = tp.totalFocusElapsed;
@@ -353,12 +450,14 @@ class _PomodoroView extends StatelessWidget {
               tp.stopTimer();
               Navigator.pop(ctx);
               Navigator.pushReplacement(
-                context, 
-                MaterialPageRoute(builder: (_) => PostStudyPage(
-                  totalFocusTime: focus, 
-                  totalBreakTime: breakTime,
-                  initialLabel: subject,
-                ))
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PostStudyPage(
+                    totalFocusTime: focus,
+                    totalBreakTime: breakTime,
+                    initialLabel: subject,
+                  ),
+                ),
               );
             },
             child: const Text("Ya, Selesai"),
@@ -392,7 +491,9 @@ class _PomodoroView extends StatelessWidget {
   void _showSettings(BuildContext context, TimerProvider tp) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
       builder: (ctx) => ChangeNotifierProvider.value(
         value: tp,
         child: Consumer<TimerProvider>(
@@ -401,7 +502,10 @@ class _PomodoroView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text("Pengaturan Timer", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text(
+                  "Pengaturan Timer",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 Text(
                   "Focus: ${TimerProvider.minFocusMinutes}-${TimerProvider.maxFocusMinutes} menit | Break: ${TimerProvider.minBreakMinutes}-${TimerProvider.maxBreakMinutes} menit",
@@ -409,16 +513,16 @@ class _PomodoroView extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 _buildTimePicker(
-                  "Focus Duration", 
-                  vm.focusMinutes, 
+                  "Focus Duration",
+                  vm.focusMinutes,
                   (v) => vm.setCustomFocusTime(v),
                   canDecrease: vm.canDecreaseFocus(),
                   canIncrease: vm.canIncreaseFocus(),
                 ),
                 const SizedBox(height: 12),
                 _buildTimePicker(
-                  "Break Duration", 
-                  vm.shortBreakMinutes, 
+                  "Break Duration",
+                  vm.shortBreakMinutes,
                   (v) => vm.setCustomShortBreakTime(v),
                   canDecrease: vm.canDecreaseBreak(),
                   canIncrease: vm.canIncreaseBreak(),
@@ -432,7 +536,10 @@ class _PomodoroView extends StatelessWidget {
     );
   }
 
-  Widget _buildTimePicker(String title, int value, Function(int) onChanged, {
+  Widget _buildTimePicker(
+    String title,
+    int value,
+    Function(int) onChanged, {
     required bool canDecrease,
     required bool canIncrease,
   }) {
@@ -443,7 +550,10 @@ class _PomodoroView extends StatelessWidget {
         Row(
           children: [
             IconButton(
-              icon: Icon(Icons.remove, color: canDecrease ? Colors.black : Colors.grey[300]),
+              icon: Icon(
+                Icons.remove,
+                color: canDecrease ? Colors.black : Colors.grey[300],
+              ),
               onPressed: canDecrease ? () => onChanged(value - 1) : null,
             ),
             Container(
@@ -452,14 +562,20 @@ class _PomodoroView extends StatelessWidget {
                 color: Colors.grey[100],
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text("$value min", style: const TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(
+                "$value min",
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
             IconButton(
-              icon: Icon(Icons.add, color: canIncrease ? Colors.black : Colors.grey[300]),
+              icon: Icon(
+                Icons.add,
+                color: canIncrease ? Colors.black : Colors.grey[300],
+              ),
               onPressed: canIncrease ? () => onChanged(value + 1) : null,
             ),
           ],
-        )
+        ),
       ],
     );
   }

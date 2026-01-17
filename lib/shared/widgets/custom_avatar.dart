@@ -26,7 +26,8 @@ class CustomAvatar extends StatelessWidget {
               style: TextStyle(
                 color: Colors.deepPurple.shade600,
                 fontWeight: FontWeight.bold,
-                fontSize: radius * 0.8, // Ukuran teks proporsional dengan radius
+                fontSize:
+                    radius * 0.8, // Ukuran teks proporsional dengan radius
               ),
             )
           : null,

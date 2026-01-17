@@ -50,9 +50,9 @@ class DayCircle extends StatelessWidget {
     return Column(
       children: <Widget>[
         Text(
-          day, 
+          day,
           style: TextStyle(
-            fontSize: 12, 
+            fontSize: 12,
             color: isToday ? Colors.black : Colors.grey,
             fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
           ),
@@ -65,17 +65,11 @@ class DayCircle extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: bgColor,
-            border: Border.all(
-              color: borderColor,
-              width: isToday ? 2 : 1,
-            ),
+            border: Border.all(color: borderColor, width: isToday ? 2 : 1),
           ),
           child: Text(
             number,
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
           ),
         ),
       ],

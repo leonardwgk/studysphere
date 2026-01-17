@@ -102,7 +102,7 @@ class _PostStudyPageState extends State<PostStudyPage> {
         userProvider.initUserStream();
 
         if (!mounted) return;
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Session successfully shared!'),
@@ -181,7 +181,9 @@ class _PostStudyPageState extends State<PostStudyPage> {
                   decoration: BoxDecoration(
                     color: Colors.blue.withValues(alpha: .05),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.blue.withValues(alpha: .1)),
+                    border: Border.all(
+                      color: Colors.blue.withValues(alpha: .1),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,

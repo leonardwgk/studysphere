@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/auth/data/models/user_model.dart'; // Import model
+import 'package:studysphere_app/shared/models/user_model.dart'; // Import model
 
 class ProfileHeader extends StatelessWidget {
   final UserModel user; // 1. Tambahkan variabel ini
@@ -24,19 +24,21 @@ class ProfileHeader extends StatelessWidget {
                     fit: BoxFit.cover,
                   )
                 : null, // kalau kosong, jangan pakai image
-            ),
-            child: user.photoUrl.isEmpty
-                ? Center(
-                    child: Text(
-                      user.username.isNotEmpty ? user.username[0].toUpperCase() : 'U',
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
-                      ),
+          ),
+          child: user.photoUrl.isEmpty
+              ? Center(
+                  child: Text(
+                    user.username.isNotEmpty
+                        ? user.username[0].toUpperCase()
+                        : 'U',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
                     ),
-                  )
-                : null,
+                  ),
+                )
+              : null,
         ),
 
         const SizedBox(width: 20),
@@ -46,7 +48,7 @@ class ProfileHeader extends StatelessWidget {
           children: [
             // nama dari firebase
             Text(
-              user.username, 
+              user.username,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
@@ -57,7 +59,10 @@ class ProfileHeader extends StatelessWidget {
                   onTap: () {
                     print("Following tapped");
                   },
-                  child: _buildStatText(user.followingCount.toString(), 'Following'),
+                  child: _buildStatText(
+                    user.followingCount.toString(),
+                    'Following',
+                  ),
                 ),
 
                 const SizedBox(width: 15),
@@ -69,10 +74,13 @@ class ProfileHeader extends StatelessWidget {
                   onTap: () {
                     print("Followers tapped");
                   },
-                  child: _buildStatText(user.followersCount.toString(), 'Followers'),
+                  child: _buildStatText(
+                    user.followersCount.toString(),
+                    'Followers',
+                  ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ],

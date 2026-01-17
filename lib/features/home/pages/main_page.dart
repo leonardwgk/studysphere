@@ -33,7 +33,10 @@ class MainPageState extends State<MainPage> {
 
   void _initData() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final calendarProvider = Provider.of<CalendarProvider>(context, listen: false);
+    final calendarProvider = Provider.of<CalendarProvider>(
+      context,
+      listen: false,
+    );
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
 
     if (userProvider.user != null) {
@@ -51,15 +54,20 @@ class MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     final calendarProvider = context.watch<CalendarProvider>();
-    
+
     return SafeArea(
       // RefreshIndicator untuk fitur Pull-to-Refresh
       child: RefreshIndicator(
         onRefresh: () async {
-          final userProvider = Provider.of<UserProvider>(context, listen: false);
+          final userProvider = Provider.of<UserProvider>(
+            context,
+            listen: false,
+          );
           if (userProvider.user != null) {
             // Force refresh on pull-to-refresh
-            await context.read<CalendarProvider>().forceRefresh(userProvider.user!.uid);
+            await context.read<CalendarProvider>().forceRefresh(
+              userProvider.user!.uid,
+            );
           }
         },
         child: SingleChildScrollView(

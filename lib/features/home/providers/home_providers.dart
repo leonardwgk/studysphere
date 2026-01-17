@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/home/data/models/post_model.dart';
+import 'package:studysphere_app/shared/models/post_model.dart';
 import 'package:studysphere_app/features/home/pages/main_page.dart';
-import 'package:studysphere_app/features/study_tracker/services/study_service.dart';
+import 'package:studysphere_app/features/home/services/home_service.dart';
 
 /// HomeProvider handles UI state (navigation) and social feed only.
 /// For stats & calendar data, use CalendarProvider instead.
@@ -12,7 +12,7 @@ class HomeProvider extends ChangeNotifier {
   final GlobalKey mainPageKey = GlobalKey();
 
   // --- DATA STATE (Social Feed) ---
-  final StudyService _studyService = StudyService();
+  final HomeService _homeService = HomeService();
   List<PostModel> _posts = [];
   bool _isLoading = false;
 
@@ -32,7 +32,7 @@ class HomeProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _posts = await _studyService.getFeedPosts();
+      _posts = await _homeService.getFeedPosts();
     } catch (e) {
       debugPrint("Error fetchPosts: $e");
     } finally {

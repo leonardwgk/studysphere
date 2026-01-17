@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/auth/data/models/user_model.dart';
+import 'package:studysphere_app/shared/models/user_model.dart';
 import 'package:studysphere_app/features/profile/pages/edit_profile_page.dart';
 
 class ActionButtons extends StatelessWidget {

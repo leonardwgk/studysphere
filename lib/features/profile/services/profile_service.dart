@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
-import 'package:studysphere_app/features/auth/data/models/user_model.dart';
+import 'package:studysphere_app/shared/models/user_model.dart';
 
 class ProfileService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -34,44 +34,66 @@ class ProfileService {
     }
   }
 
-// 3. Update Profile dengan Validasi Unik
+  // 3. Update Profile dengan Validasi Unik dan Atomic Username Registry
   Future<void> updateProfile({
     required String uid,
     required String username,
     String? photoUrl,
   }) async {
     try {
-      // --- LANGKAH 1: CEK KEUNIKAN USERNAME ---
-      
-      // Cari user lain yang punya username SAMA PERSIS
-      final querySnapshot = await _firestore
-          .collection('users')
-          .where('username', isEqualTo: username)
-          .get();
+      // Get current username from users document
+      final userDoc = await _firestore.collection('users').doc(uid).get();
+      final currentUsername = userDoc.data()?['username'] as String? ?? '';
+      final usernameChanged = currentUsername != username;
 
-      // Jika ada hasilnya...
-      if (querySnapshot.docs.isNotEmpty) {
-        // Ambil dokumen pertama yang ditemukan
-        final existingUser = querySnapshot.docs.first;
-        
-        // Cek ID-nya. Kalau ID-nya BEDA dengan ID kita, berarti itu orang lain!
-        if (existingUser.id != uid) {
-          throw Exception("Username '$username' is already taken.");
+      if (usernameChanged) {
+        // Use transaction for atomic username registry update
+        await _firestore.runTransaction((transaction) async {
+          // 1. Check if new username already exists in registry
+          final newUsernameDoc = await transaction.get(
+            _firestore.collection('usernames').doc(username),
+          );
+
+          if (newUsernameDoc.exists) {
+            // Username taken by someone else
+            throw Exception("Username '$username' is already taken.");
+          }
+
+          // 2. Delete old username from registry (if exists)
+          if (currentUsername.isNotEmpty) {
+            transaction.delete(
+              _firestore.collection('usernames').doc(currentUsername),
+            );
+          }
+
+          // 3. Create new username in registry
+          transaction.set(_firestore.collection('usernames').doc(username), {
+            'uid': uid,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+          // 4. Update users document
+          Map<String, dynamic> userData = {
+            'username': username,
+            'searchKeywords': _generateSearchKeywords(username),
+          };
+          if (photoUrl != null) userData['photoUrl'] = photoUrl;
+
+          transaction.update(_firestore.collection('users').doc(uid), userData);
+        });
+      } else {
+        // Username didn't change, just update other fields
+        if (photoUrl != null) {
+          await _firestore.collection('users').doc(uid).update({
+            'photoUrl': photoUrl,
+          });
         }
       }
 
-      // --- LANGKAH 2: JIKA LOLOS, LANJUT UPDATE ---
-
-      Map<String, dynamic> data = {'username': username};
-      if (photoUrl != null) data['photoUrl'] = photoUrl;
-
-      // Update Firestore
-      await _firestore.collection('users').doc(uid).update(data);
-
-      // Update Auth (DisplayName & PhotoURL)
+      // Update Firebase Auth profile
       User? user = _auth.currentUser;
       if (user != null) {
-        if (username != user.displayName) {
+        if (usernameChanged && username != user.displayName) {
           await user.updateDisplayName(username);
         }
         if (photoUrl != null && photoUrl != user.photoURL) {
@@ -79,11 +101,23 @@ class ProfileService {
         }
         await user.reload();
       }
-
     } catch (e) {
-      // Lempar error agar bisa ditangkap oleh UI (EditProfilePage)
-      rethrow; 
+      // Rethrow untuk ditangkap oleh UI (EditProfilePage)
+      rethrow;
     }
+  }
+
+  /// Generate search keywords for username (for user search feature)
+  List<String> _generateSearchKeywords(String username) {
+    final List<String> keywords = [];
+    final lowerUsername = username.toLowerCase();
+
+    // Add progressively longer prefixes
+    for (int i = 1; i <= lowerUsername.length; i++) {
+      keywords.add(lowerUsername.substring(0, i));
+    }
+
+    return keywords;
   }
 
   // 4. Update Stats

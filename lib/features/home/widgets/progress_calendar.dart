@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/home/data/models/summary_model.dart';
+import 'package:studysphere_app/shared/models/summary_model.dart';
 import 'package:studysphere_app/features/home/widgets/day_circle.dart';
 
 class ProgressCalendar extends StatelessWidget {
@@ -7,7 +7,7 @@ class ProgressCalendar extends StatelessWidget {
   final List<SummaryModel> weeklySummaries;
 
   const ProgressCalendar({
-    super.key, 
+    super.key,
     required this.onViewCalendar,
     required this.weeklySummaries,
   });
@@ -17,7 +17,7 @@ class ProgressCalendar extends StatelessWidget {
     // Hitung tanggal Senin-Minggu minggu ini
     final now = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
-    
+
     // Buat map untuk lookup cepat: date string -> summary
     final Map<String, SummaryModel> summaryMap = {};
     for (var summary in weeklySummaries) {
@@ -27,7 +27,7 @@ class ProgressCalendar extends StatelessWidget {
     // Generate 7 hari (Senin-Minggu)
     final List<_DayData> weekDays = [];
     final dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    
+
     for (int i = 0; i < 7; i++) {
       final date = monday.add(Duration(days: i));
       final dateStr = _formatDate(date);
@@ -36,14 +36,16 @@ class ProgressCalendar extends StatelessWidget {
       final bool isToday = _isSameDay(date, now);
       final bool isFuture = date.isAfter(now);
 
-      weekDays.add(_DayData(
-        dayName: dayNames[i],
-        dayNumber: date.day.toString(),
-        hasStudied: hasStudied,
-        isToday: isToday,
-        isFuture: isFuture,
-        totalMinutes: summary?.dailyTotal ?? 0,
-      ));
+      weekDays.add(
+        _DayData(
+          dayName: dayNames[i],
+          dayNumber: date.day.toString(),
+          hasStudied: hasStudied,
+          isToday: isToday,
+          isFuture: isFuture,
+          totalMinutes: summary?.dailyTotal ?? 0,
+        ),
+      );
     }
 
     return Container(

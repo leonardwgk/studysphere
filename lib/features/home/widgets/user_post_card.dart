@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/home/data/models/post_model.dart';
+import 'package:studysphere_app/shared/models/post_model.dart';
 import 'package:studysphere_app/shared/widgets/custom_avatar.dart';
 import 'package:intl/intl.dart'; // for DateFormat
 

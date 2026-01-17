@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:studysphere_app/features/auth/data/models/user_model.dart';
+import 'package:studysphere_app/shared/models/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FriendService {
@@ -103,13 +103,9 @@ class FriendService {
       final currentUserRef = _db.collection('users').doc(currentUid);
       final targetUserRef = _db.collection('users').doc(targetUid);
 
-      batch.update(currentUserRef, {
-        'followingCount': FieldValue.increment(1),
-      });
+      batch.update(currentUserRef, {'followingCount': FieldValue.increment(1)});
 
-      batch.update(targetUserRef, {
-        'followersCount': FieldValue.increment(1),
-      });
+      batch.update(targetUserRef, {'followersCount': FieldValue.increment(1)});
 
       await batch.commit();
       print("✅ Successfully followed user: $targetUid");
@@ -152,9 +148,7 @@ class FriendService {
         'followingCount': FieldValue.increment(-1),
       });
 
-      batch.update(targetUserRef, {
-        'followersCount': FieldValue.increment(-1),
-      });
+      batch.update(targetUserRef, {'followersCount': FieldValue.increment(-1)});
 
       await batch.commit();
       print("Successfully unfollowed user: $targetUid");

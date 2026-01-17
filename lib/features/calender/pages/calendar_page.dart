@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:studysphere_app/features/auth/providers/user_provider.dart';
 import 'package:studysphere_app/features/calender/providers/calendar_provider.dart';
-import 'package:studysphere_app/features/home/data/models/summary_model.dart';
+import 'package:studysphere_app/shared/models/summary_model.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -656,6 +656,7 @@ class _CalendarPageState extends State<CalendarPage> {
     final breakDuration = session['breakDuration'] as int? ?? 0;
     final label = session['label'] as String? ?? 'Unknown';
     final description = session['description'] as String? ?? '';
+    final title = session['title'] as String? ?? '';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -669,25 +670,19 @@ class _CalendarPageState extends State<CalendarPage> {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
+              Expanded(
                 child: Text(
-                  'Session #$index',
+                  title.isNotEmpty ? title : 'Session #$index',
                   style: TextStyle(
                     color: Colors.blue.shade700,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: 14,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,

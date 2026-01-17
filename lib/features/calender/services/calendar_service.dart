@@ -1,9 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/home/data/models/summary_model.dart';
+import 'package:studysphere_app/shared/models/summary_model.dart';
 
 class CalendarService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db;
+
+  /// Constructor with optional Firestore injection for testability
+  CalendarService({FirebaseFirestore? firestore})
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   /// Ambil summary untuk hari ini
   Future<SummaryModel?> getTodaySummary(String userId) async {
@@ -125,7 +129,7 @@ class CalendarService {
     }
   }
 
-  /// Ambil detail sessions untuk tanggal tertentu
+  /// Ambil detail sessions untuk tanggal tertentu (from posts collection)
   Future<List<Map<String, dynamic>>> getSessionsForDate(
     String userId,
     DateTime date,
@@ -135,21 +139,36 @@ class CalendarService {
       final startOfDay = DateTime(date.year, date.month, date.day);
       final endOfDay = startOfDay.add(const Duration(days: 1));
 
+      // Query posts collection instead of sessions
       final querySnapshot = await _db
-          .collection('sessions')
+          .collection('posts')
           .where('userId', isEqualTo: userId)
           .where(
-            'timestamp',
+            'createdAt',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
           )
-          .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
-          .orderBy('timestamp', descending: true)
+          .where('createdAt', isLessThan: Timestamp.fromDate(endOfDay))
+          .orderBy('createdAt', descending: true)
           .get();
 
+      // Transform to match expected format (map posts fields to session fields)
       return querySnapshot.docs.map((doc) {
         final data = doc.data();
-        data['id'] = doc.id;
-        return data;
+        return {
+          'id': doc.id,
+          // Map posts fields to session-compatible fields
+          'focusDuration': data['focusTime'] ?? 0,
+          'breakDuration': data['breakTime'] ?? 0,
+          'totalDuration': (data['focusTime'] ?? 0) + (data['breakTime'] ?? 0),
+          'label': data['label'] ?? '',
+          'description': data['description'] ?? '',
+          'timestamp': data['createdAt'],
+          // Additional fields from posts
+          'title': data['title'] ?? '',
+          'imageUrl': data['imageUrl'] ?? '',
+          'username': data['username'] ?? '',
+          'userPhotoUrl': data['userPhotoUrl'] ?? '',
+        };
       }).toList();
     } catch (e) {
       debugPrint("Error getSessionsForDate: $e");

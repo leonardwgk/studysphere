@@ -41,7 +41,9 @@ class PostModel {
       imageUrl: data['imageUrl'] ?? '',
       focusTime: data['focusTime'] ?? 0,
       breakTime: data['breakTime'] ?? 0,
-      createdAt: data['createdAt'] != null ? (data['createdAt'] as Timestamp).toDate() : DateTime.now()
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 

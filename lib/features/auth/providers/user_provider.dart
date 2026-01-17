@@ -1,20 +1,20 @@
-import 'dart:async'; // 1. Wajib untuk StreamSubscription
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/features/auth/data/models/user_model.dart';
-import 'package:studysphere_app/features/profile/services/profile_service.dart'; // 2. Ganti AuthService ke ProfileService
+import 'package:studysphere_app/shared/models/user_model.dart';
+import 'package:studysphere_app/features/auth/services/user_service.dart';
 
 class UserProvider extends ChangeNotifier {
-  // Kita pakai ProfileService karena di situ ada fungsi stream-nya
-  final ProfileService _profileService = ProfileService();
-  
-  UserModel? _user; 
+  // Using UserService from auth feature (proper architecture)
+  final UserService _userService = UserService();
+
+  UserModel? _user;
   StreamSubscription<UserModel>? _userSubscription;
 
   // Getter
   UserModel? get user => _user;
-  
+
   // (Opsional) Helper untuk cek apakah sedang loading data awal
-  bool get isLoading => _user == null; 
+  bool get isLoading => _user == null;
 
   // --- LOGIKA BARU: STREAM ---
   // Fungsi ini dipanggil sekali saat aplikasi mulai / user login
@@ -24,7 +24,7 @@ class UserProvider extends ChangeNotifier {
 
     // 2. Mulai dengarkan data dari Firebase secara LIVE
     try {
-      _userSubscription = _profileService.getUserStream().listen(
+      _userSubscription = _userService.getUserStream().listen(
         (updatedUser) {
           _user = updatedUser;
           notifyListeners(); // Memberi tahu UI: "Data berubah, refresh dong!"

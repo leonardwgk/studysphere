@@ -6,8 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:studysphere_app/features/auth/data/models/user_model.dart';
-import 'package:studysphere_app/features/home/data/models/post_model.dart';
+import 'package:studysphere_app/shared/models/user_model.dart';
 
 class StudyService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -31,19 +30,7 @@ class StudyService {
     final dateStr =
         "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 
-    // 1. Tambah ke koleksi 'sessions'
-    final sessionRef = _db.collection('sessions').doc();
-    batch.set(sessionRef, {
-      'userId': _uid,
-      'focusDuration': focusTime,
-      'breakDuration': breakTime,
-      'totalDuration': focusTime + breakTime,
-      'label': label,
-      'description': description ?? '',
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-
-    // 2. Update/Set 'daily_summaries'
+    // 1. Update/Set 'daily_summaries'
     final summaryRef = _db
         .collection('daily_summaries')
         .doc('${_uid}_$dateStr');
@@ -56,14 +43,14 @@ class StudyService {
       'labelsStudied': FieldValue.arrayUnion([label]),
     }, SetOptions(merge: true));
 
-    // 3. Update total di 'users'
+    // 2. Update total di 'users'
     final userRef = _db.collection('users').doc(_uid);
     batch.update(userRef, {
       'totalFocusTime': FieldValue.increment(focusTime),
       'totalBreakTime': FieldValue.increment(breakTime),
     });
 
-    // 4. Tambah ke koleksi 'posts'
+    // 3. Tambah ke koleksi 'posts'
     final postRef = _db.collection('posts').doc();
     batch.set(postRef, {
       'userId': user.uid,
@@ -123,29 +110,6 @@ class StudyService {
     } catch (e) {
       debugPrint("Error upload image: $e");
       return null;
-    }
-  }
-
-  // Fungsi untuk mengambil postingan dari seluruh user (Global Feed)
-  Future<List<PostModel>> getFeedPosts() async {
-    try {
-      // 1. Referensi ke koleksi 'posts'
-      // 2. Diurutkan berdasarkan waktu (terbaru di atas)
-      // 3. Batasi jumlahnya (Pagination sederhana)
-      QuerySnapshot querySnapshot = await _db
-          .collection('posts')
-          .orderBy('createdAt', descending: true)
-          .limit(10)
-          .get();
-
-      // 4. Transformasi: Mengubah List DocumentSnapshot menjadi List PostModel
-      return querySnapshot.docs.map((doc) {
-        return PostModel.fromFirestore(doc);
-      }).toList();
-    } catch (e) {
-      debugPrint("Error at getFeedPosts: $e");
-      // Melempar kembali error agar bisa ditangkap oleh Provider (UI)
-      rethrow;
     }
   }
 

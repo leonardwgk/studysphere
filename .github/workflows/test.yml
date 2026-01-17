@@ -1,0 +1,39 @@
+name: Flutter Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.7'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Create Firebase options stub
+        run: |
+          cat > lib/firebase_options.dart << 'EOF'
+          import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform => const FirebaseOptions(
+              apiKey: 'stub', appId: 'stub', messagingSenderId: 'stub', projectId: 'stub',
+            );
+          }
+          EOF
+
+      - name: Run tests
+        run: flutter test --coverage
