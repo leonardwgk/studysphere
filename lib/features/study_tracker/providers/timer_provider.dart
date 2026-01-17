@@ -105,8 +105,17 @@ class TimerProvider with ChangeNotifier {
   void setCustomShortBreakTime(int mins) {
     if (mins < minBreakMinutes || mins > maxBreakMinutes) return;
     _shortBreakMinutes = mins;
-    if (!_isRunning && _sessionType != SessionType.focus) {
+    if (!_isRunning && _sessionType == SessionType.shortBreak) {
       _secondsRemaining = _shortBreakMinutes * 60;
+    }
+    notifyListeners();
+  }
+
+  void setCustomLongBreakTime(int mins) {
+    if (mins < minLongBreakMinutes || mins > maxLongBreakMinutes) return;
+    _longBreakMinutes = mins;
+    if (!_isRunning && _sessionType == SessionType.longBreak) {
+      _secondsRemaining = _longBreakMinutes * 60;
     }
     notifyListeners();
   }
@@ -116,6 +125,23 @@ class TimerProvider with ChangeNotifier {
   bool canIncreaseFocus() => _focusMinutes < maxFocusMinutes;
   bool canDecreaseBreak() => _shortBreakMinutes > minBreakMinutes;
   bool canIncreaseBreak() => _shortBreakMinutes < maxBreakMinutes;
+  bool canDecreaseLongBreak() => _longBreakMinutes > minLongBreakMinutes;
+  bool canIncreaseLongBreak() => _longBreakMinutes < maxLongBreakMinutes;
+
+  // Check if currently in a break session (can skip)
+  bool get isBreakSession => _sessionType != SessionType.focus;
+
+  // Skip current break and go to next focus session
+  void skipBreak() {
+    if (_sessionType == SessionType.focus) return; // Can't skip focus time
+
+    _timer?.cancel();
+    _isRunning = false;
+    _currentIteration++;
+    _sessionType = SessionType.focus;
+    _secondsRemaining = _focusMinutes * 60;
+    notifyListeners();
+  }
 
   // Helper: Update notification with current timer state
   void _updateNotification() {
