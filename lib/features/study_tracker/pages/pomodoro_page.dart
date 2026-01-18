@@ -27,32 +27,45 @@ class _PomodoroView extends StatelessWidget {
   static const Color _shortBreakBgColor = Color(0xFFE8F8F7); // Light teal bg
   static const Color _longBreakColor = Color(0xFF45B7D1); // Deep blue
   static const Color _longBreakBgColor = Color(0xFFE8F4F8); // Light blue bg
+  // Neutral color for initial state (before timer started)
+  static const Color _neutralColor = Color(0xFF6B7280); // Gray
+  static const Color _neutralBgColor = Color(0xFFF3F4F6); // Light gray bg
 
   @override
   Widget build(BuildContext context) {
     final tp = context.watch<TimerProvider>();
+
+    // Check if timer has ever been started (totalFocusElapsed or isRunning indicates activity)
+    final bool hasStarted = tp.totalFocusElapsed > 0 || tp.isRunning;
 
     // Dynamic colors based on session type
     final Color themeColor;
     final Color backgroundColor;
     final String statusText;
 
-    switch (tp.sessionType) {
-      case SessionType.focus:
-        themeColor = _focusColor;
-        backgroundColor = tp.isRunning ? _focusBgColor : Colors.white;
-        statusText = "Focus Time";
-        break;
-      case SessionType.shortBreak:
-        themeColor = _shortBreakColor;
-        backgroundColor = _shortBreakBgColor;
-        statusText = "Short Break";
-        break;
-      case SessionType.longBreak:
-        themeColor = _longBreakColor;
-        backgroundColor = _longBreakBgColor;
-        statusText = "Long Break";
-        break;
+    // Show neutral colors before timer has started for the first time
+    if (!hasStarted && tp.sessionType == SessionType.focus) {
+      themeColor = _neutralColor;
+      backgroundColor = _neutralBgColor;
+      statusText = "Ready to Focus";
+    } else {
+      switch (tp.sessionType) {
+        case SessionType.focus:
+          themeColor = _focusColor;
+          backgroundColor = tp.isRunning ? _focusBgColor : Colors.white;
+          statusText = "Focus Time";
+          break;
+        case SessionType.shortBreak:
+          themeColor = _shortBreakColor;
+          backgroundColor = _shortBreakBgColor;
+          statusText = "Short Break";
+          break;
+        case SessionType.longBreak:
+          themeColor = _longBreakColor;
+          backgroundColor = _longBreakBgColor;
+          statusText = "Long Break";
+          break;
+      }
     }
 
     return Scaffold(
@@ -81,7 +94,10 @@ class _PomodoroView extends StatelessWidget {
                   _buildTimerCircle(tp, themeColor, statusText),
                   const Spacer(),
                   _buildControls(context, tp, themeColor),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
+                  // Skip break button - only visible during break sessions
+                  if (tp.isBreakSession) _buildSkipBreakButton(context, tp),
+                  const SizedBox(height: 12),
                   _buildStopButton(context, tp),
                 ],
               ),
@@ -362,6 +378,51 @@ class _PomodoroView extends StatelessWidget {
     );
   }
 
+  Widget _buildSkipBreakButton(BuildContext context, TimerProvider tp) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text("Skip Break?"),
+                content: const Text(
+                  "Are you sure you want to skip this break and start the next focus session?",
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text("Cancel"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      tp.skipBreak();
+                      Navigator.pop(ctx);
+                    },
+                    child: const Text("Skip Break"),
+                  ),
+                ],
+              ),
+            );
+          },
+          icon: const Icon(Icons.skip_next),
+          label: const Text("Skip Break"),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.grey[700],
+            side: BorderSide(color: Colors.grey[300]!),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildStopButton(BuildContext context, TimerProvider tp) {
     return Container(
       width: double.infinity,
@@ -508,24 +569,36 @@ class _PomodoroView extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Focus: ${TimerProvider.minFocusMinutes}-${TimerProvider.maxFocusMinutes} menit | Break: ${TimerProvider.minBreakMinutes}-${TimerProvider.maxBreakMinutes} menit",
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  "Focus: ${TimerProvider.minFocusMinutes}-${TimerProvider.maxFocusMinutes} min | Short Break: ${TimerProvider.minBreakMinutes}-${TimerProvider.maxBreakMinutes} min | Long Break: ${TimerProvider.minLongBreakMinutes}-${TimerProvider.maxLongBreakMinutes} min",
+                  style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
                 _buildTimePicker(
+                  context,
                   "Focus Duration",
                   vm.focusMinutes,
                   (v) => vm.setCustomFocusTime(v),
-                  canDecrease: vm.canDecreaseFocus(),
-                  canIncrease: vm.canIncreaseFocus(),
+                  minValue: TimerProvider.minFocusMinutes,
+                  maxValue: TimerProvider.maxFocusMinutes,
                 ),
                 const SizedBox(height: 12),
                 _buildTimePicker(
-                  "Break Duration",
+                  context,
+                  "Short Break",
                   vm.shortBreakMinutes,
                   (v) => vm.setCustomShortBreakTime(v),
-                  canDecrease: vm.canDecreaseBreak(),
-                  canIncrease: vm.canIncreaseBreak(),
+                  minValue: TimerProvider.minBreakMinutes,
+                  maxValue: TimerProvider.maxBreakMinutes,
+                ),
+                const SizedBox(height: 12),
+                _buildTimePicker(
+                  context,
+                  "Long Break",
+                  vm.longBreakMinutes,
+                  (v) => vm.setCustomLongBreakTime(v),
+                  minValue: TimerProvider.minLongBreakMinutes,
+                  maxValue: TimerProvider.maxLongBreakMinutes,
                 ),
                 const SizedBox(height: 20),
               ],
@@ -537,46 +610,155 @@ class _PomodoroView extends StatelessWidget {
   }
 
   Widget _buildTimePicker(
+    BuildContext context,
     String title,
     int value,
     Function(int) onChanged, {
-    required bool canDecrease,
-    required bool canIncrease,
+    required int minValue,
+    required int maxValue,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(title, style: const TextStyle(fontSize: 16)),
-        Row(
-          children: [
-            IconButton(
-              icon: Icon(
-                Icons.remove,
-                color: canDecrease ? Colors.black : Colors.grey[300],
-              ),
-              onPressed: canDecrease ? () => onChanged(value - 1) : null,
+        GestureDetector(
+          onTap: () => _showTimeInputDialog(
+            context,
+            title,
+            value,
+            minValue,
+            maxValue,
+            onChanged,
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                "$value min",
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "$value min",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.edit, size: 16, color: Colors.grey[600]),
+              ],
             ),
-            IconButton(
-              icon: Icon(
-                Icons.add,
-                color: canIncrease ? Colors.black : Colors.grey[300],
-              ),
-              onPressed: canIncrease ? () => onChanged(value + 1) : null,
-            ),
-          ],
+          ),
         ),
       ],
+    );
+  }
+
+  void _showTimeInputDialog(
+    BuildContext context,
+    String title,
+    int currentValue,
+    int minValue,
+    int maxValue,
+    Function(int) onChanged,
+  ) {
+    final controller = TextEditingController(text: currentValue.toString());
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          "Set $title",
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Enter duration ($minValue - $maxValue minutes)",
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+                decoration: InputDecoration(
+                  suffixText: "min",
+                  suffixStyle: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.black, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Please enter a value";
+                  }
+                  final parsed = int.tryParse(value);
+                  if (parsed == null) {
+                    return "Enter a valid number";
+                  }
+                  if (parsed < minValue || parsed > maxValue) {
+                    return "Must be $minValue - $maxValue";
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text("Cancel", style: TextStyle(color: Colors.grey[600])),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                final newValue = int.parse(controller.text);
+                onChanged(newValue);
+                Navigator.pop(ctx);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text("Save"),
+          ),
+        ],
+      ),
     );
   }
 }
