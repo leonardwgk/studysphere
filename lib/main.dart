@@ -6,11 +6,20 @@ import 'package:provider/provider.dart';
 import 'package:studysphere_app/features/auth/providers/user_provider.dart';
 import 'package:studysphere_app/features/calender/providers/calendar_provider.dart';
 import 'package:studysphere_app/features/friend/providers/friend_provider.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+ 
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } catch (e) {
+    debugPrint("Firebase initialization failed: $e");
+  } finally {
+    FlutterNativeSplash.remove();
+  }
+  
   runApp(const MyApp());
 }
 

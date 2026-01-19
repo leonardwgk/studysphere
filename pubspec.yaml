@@ -1,5 +1,5 @@
 name: studysphere_app
-description: "A new Flutter project."
+description: "Focus Deeply. Connect Socially. Grow Daily. With StudySphere"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -60,6 +60,8 @@ dev_dependencies:
   mockito: ^5.4.4
   build_runner: ^2.4.8
   fake_cloud_firestore: ^4.0.1
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
