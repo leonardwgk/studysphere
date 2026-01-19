@@ -2,47 +2,112 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:studysphere_app/shared/models/user_model.dart';
 import 'package:studysphere_app/features/friend/services/friend_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FriendProvider extends ChangeNotifier {
   final FriendService _friendService = FriendService();
 
+  // --- Search State ---
   List<UserModel> _searchResults = [];
   bool _isLoading = false;
   Timer? _debounce;
 
-  Set<String> _followingUids = {};
+  // --- Follow/Unfollow Logic State ---
+  Set<String> _followingUids = {}; // List UID yang SAYA follow (untuk status tombol)
   final Set<String> _loadingFollowUids = {};
+
+  // --- List Page State (Fitur Baru) ---
+  List<UserModel> _followersList = []; // List orang yang mem-follow target
+  List<UserModel> _followingList = []; // List orang yang di-follow target
+  bool _isLoadingList = false;
 
   // Getters
   List<UserModel> get searchResults => _searchResults;
   bool get isLoading => _isLoading;
+  
+  List<UserModel> get followersList => _followersList;
+  List<UserModel> get followingList => _followingList;
+  bool get isLoadingList => _isLoadingList;
 
   // Constructor
   FriendProvider() {
-    _loadFollowingData();
+    _loadMyFollowingData();
   }
 
-  // Muat data following dari service
-  Future<void> _loadFollowingData() async {
+  // 1. Load data siapa saja yang SAYA (Current User) follow
+  // Ini penting agar tombol Follow/Unfollow di list tampil dengan benar statusnya
+  Future<void> _loadMyFollowingData() async {
     try {
       _followingUids = await _friendService.getFollowingUids();
       notifyListeners();
     } catch (e) {
-      print("Error loading following data: $e");
+      print("Error loading my following data: $e");
     }
   }
 
-  // Refresh following data (dipanggil manual jika perlu)
-  Future<void> refreshFollowingData() async {
-    await _loadFollowingData();
+  // 2. Load List Followers & Following milik user tertentu (Target User)
+  Future<void> loadFollowLists(String targetUserId) async {
+    _isLoadingList = true;
+    _followersList = []; // Reset dulu biar bersih
+    _followingList = [];
+    notifyListeners();
+
+    try {
+      // Fetch kedua list secara parallel agar cepat
+      final results = await Future.wait([
+        _friendService.getFollowersList(targetUserId),
+        _friendService.getFollowingList(targetUserId),
+      ]);
+
+      _followersList = results[0];
+      _followingList = results[1];
+      
+      // Refresh juga data "My Following" untuk memastikan status tombol akurat
+      await _loadMyFollowingData(); 
+
+    } catch (e) {
+      print("Error loading lists: $e");
+    } finally {
+      _isLoadingList = false;
+      notifyListeners();
+    }
   }
 
-  // Cek apakah user sedang di-follow
+  // Future<void> loadFollowLists(String targetUserId) async {
+  //   _isLoadingList = true;
+  //   _followersList = [];
+  //   _followingList = [];
+  //   notifyListeners();
+
+  //   print("DEBUG: Mulai load list untuk Target User: $targetUserId"); // Cek 1
+
+  //   try {
+  //     // Fetch data
+  //     final followers = await _friendService.getFollowersList(targetUserId);
+  //     final following = await _friendService.getFollowingList(targetUserId);
+      
+  //     print("DEBUG: Dapat ${followers.length} followers"); // Cek 2
+  //     print("DEBUG: Dapat ${following.length} following"); // Cek 3
+
+  //     _followersList = followers;
+  //     _followingList = following;
+      
+  //     await _loadMyFollowingData(); 
+
+  //   } catch (e) {
+  //     print("DEBUG ERROR: Gagal load list karena: $e"); // Cek Error
+  //   } finally {
+  //     _isLoadingList = false;
+  //     notifyListeners();
+  //   }
+  // }
+
+  // Cek apakah user sedang di-follow oleh SAYA
   bool isFollowing(String uid) {
     return _followingUids.contains(uid);
   }
 
-  // Fungsi Search dengan Debounce
+  // --- Fungsi Search (Tetap sama) ---
   void onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
@@ -74,15 +139,15 @@ class FriendProvider extends ChangeNotifier {
     }
   }
 
-  // Toggle Follow/Unfollow
+  // --- Toggle Follow Logic (Tetap sama, logic ini akan update UI otomatis) ---
   Future<void> toggleFollow(UserModel user) async {
-    // Cegah klik spam
     if (_loadingFollowUids.contains(user.uid)) return;
 
     _loadingFollowUids.add(user.uid);
 
     final isCurrentlyFollowing = isFollowing(user.uid);
 
+    // Optimistic UI Update (Ubah tampilan dulu sebelum request selesai)
     if (isCurrentlyFollowing) {
       _followingUids.remove(user.uid);
     } else {
@@ -97,6 +162,7 @@ class FriendProvider extends ChangeNotifier {
         await _friendService.followUser(user.uid);
       }
     } catch (e) {
+      // Rollback jika error
       if (isCurrentlyFollowing) {
         _followingUids.add(user.uid);
       } else {
@@ -104,17 +170,12 @@ class FriendProvider extends ChangeNotifier {
       }
       notifyListeners();
       print("Toggle follow error: $e");
-
-      // Tampilkan error ke user
-      debugPrint(
-        "Failed to ${isCurrentlyFollowing ? 'unfollow' : 'follow'} user: $e",
-      );
     } finally {
       _loadingFollowUids.remove(user.uid);
+      notifyListeners(); // Ensure loading state is cleared
     }
   }
 
-  // Membersihkan hasil saat keluar halaman
   void clearSearch() {
     _searchResults = [];
     _isLoading = false;

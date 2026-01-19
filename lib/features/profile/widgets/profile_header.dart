@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:studysphere_app/shared/models/user_model.dart'; // Import model
+import 'package:studysphere_app/shared/models/user_model.dart';
+import 'package:studysphere_app/features/profile/pages/follow_list_page.dart';
 
 class ProfileHeader extends StatelessWidget {
-  final UserModel user; // 1. Tambahkan variabel ini
+  final UserModel user;
 
-  // 2. Wajibkan parameter user saat dipanggil
   const ProfileHeader({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Avatar
+        // Avatar Section
         Container(
           width: 80,
           height: 80,
@@ -23,7 +23,7 @@ class ProfileHeader extends StatelessWidget {
                     image: NetworkImage(user.photoUrl),
                     fit: BoxFit.cover,
                   )
-                : null, // kalau kosong, jangan pakai image
+                : null,
           ),
           child: user.photoUrl.isEmpty
               ? Center(
@@ -42,22 +42,35 @@ class ProfileHeader extends StatelessWidget {
         ),
 
         const SizedBox(width: 20),
+        
         // Info Column
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // nama dari firebase
+            // Nama User
             Text(
               user.username,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
+            
+            // Row Stats (Following & Followers)
             Row(
               children: [
-                // Following
+                // 1. Tombol FOLLOWING
                 GestureDetector(
                   onTap: () {
-                    print("Following tapped");
+                    // Navigasi ke Halaman List (Tab Following / Index 1)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FollowListPage(
+                          userId: user.uid,
+                          username: user.username,
+                          initialIndex: 0, // 0 = Tab Following
+                        ),
+                      ),
+                    );
                   },
                   child: _buildStatText(
                     user.followingCount.toString(),
@@ -69,10 +82,20 @@ class ProfileHeader extends StatelessWidget {
                 const Text('•', style: TextStyle(color: Colors.grey)),
                 const SizedBox(width: 15),
 
-                // Followers
+                // 2. Tombol FOLLOWERS
                 GestureDetector(
                   onTap: () {
-                    print("Followers tapped");
+                    // Navigasi ke Halaman List (Tab Followers / Index 0)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FollowListPage(
+                          userId: user.uid,
+                          username: user.username,
+                          initialIndex: 1, // 1 = Tab Followers
+                        ),
+                      ),
+                    );
                   },
                   child: _buildStatText(
                     user.followersCount.toString(),
@@ -87,6 +110,7 @@ class ProfileHeader extends StatelessWidget {
     );
   }
 
+  // Widget Helper untuk Text (Tetap sama)
   Widget _buildStatText(String count, String label) {
     return RichText(
       text: TextSpan(
