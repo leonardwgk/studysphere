@@ -73,35 +73,6 @@ class FriendProvider extends ChangeNotifier {
     }
   }
 
-  // Future<void> loadFollowLists(String targetUserId) async {
-  //   _isLoadingList = true;
-  //   _followersList = [];
-  //   _followingList = [];
-  //   notifyListeners();
-
-  //   print("DEBUG: Mulai load list untuk Target User: $targetUserId"); // Cek 1
-
-  //   try {
-  //     // Fetch data
-  //     final followers = await _friendService.getFollowersList(targetUserId);
-  //     final following = await _friendService.getFollowingList(targetUserId);
-      
-  //     print("DEBUG: Dapat ${followers.length} followers"); // Cek 2
-  //     print("DEBUG: Dapat ${following.length} following"); // Cek 3
-
-  //     _followersList = followers;
-  //     _followingList = following;
-      
-  //     await _loadMyFollowingData(); 
-
-  //   } catch (e) {
-  //     print("DEBUG ERROR: Gagal load list karena: $e"); // Cek Error
-  //   } finally {
-  //     _isLoadingList = false;
-  //     notifyListeners();
-  //   }
-  // }
-
   // Cek apakah user sedang di-follow oleh SAYA
   bool isFollowing(String uid) {
     return _followingUids.contains(uid);
