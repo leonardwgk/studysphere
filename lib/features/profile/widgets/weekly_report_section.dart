@@ -200,8 +200,9 @@ class _ChartBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double heightPct = value / max;
-    if (heightPct < 0.05 && value > 0)
+    if (heightPct < 0.05 && value > 0) {
       heightPct = 0.05; // Minimal height visually
+    }
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
