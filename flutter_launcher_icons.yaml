@@ -1,0 +1,6 @@
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/img/studysphere_logo_android.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/img/studysphere_logo_android.png"

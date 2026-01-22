@@ -1,0 +1,7 @@
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/img/FullLogo_Transparent.png # Keeps the full logo for older Androids
+  android_12:
+    image: assets/img/studysphere_logo_android.png # Use ONLY the icon for modern Androids
+    color: "#FFFFFF"
+  fullscreen: true
