@@ -8,9 +8,32 @@ class TimerProvider with ChangeNotifier {
   // Notification service (null when disabled for tests)
   final NotificationService? _notificationService;
 
+  /// Stream subscription for notification action buttons
+  StreamSubscription<String>? _actionSubscription;
+
   /// Constructor - set enableNotifications to false for tests
   TimerProvider({bool enableNotifications = true})
-    : _notificationService = enableNotifications ? NotificationService() : null;
+    : _notificationService = enableNotifications ? NotificationService() : null {
+    // Listen for notification action button taps
+    if (enableNotifications) {
+      _actionSubscription = NotificationService.onAction.listen(_handleNotificationAction);
+    }
+  }
+
+  /// Handle actions triggered from notification buttons
+  void _handleNotificationAction(String action) {
+    switch (action) {
+      case 'pause':
+        pauseTimer();
+        break;
+      case 'resume':
+        startTimer();
+        break;
+      case 'stop':
+        stopTimer();
+        break;
+    }
+  }
 
   // Pengaturan Waktu (Menit) - dengan batas validasi
   static const int minFocusMinutes = 1;
@@ -131,6 +154,11 @@ class TimerProvider with ChangeNotifier {
   // Check if currently in a break session (can skip)
   bool get isBreakSession => _sessionType != SessionType.focus;
 
+  /// Force-push the current state to the notification (used on lifecycle changes)
+  void forceUpdateNotification() {
+    _updateNotification();
+  }
+
   // Skip current break and go to next focus session
   void skipBreak() {
     if (_sessionType == SessionType.focus) return; // Can't skip focus time
@@ -210,25 +238,37 @@ class TimerProvider with ChangeNotifier {
     } catch (_) {
       // Ignore in tests
     }
-    // Reset timer ke durasi awal sesuai tipe sesi
-    _secondsRemaining = _sessionType == SessionType.focus
-        ? _focusMinutes * 60
-        : _shortBreakMinutes * 60;
+    // Reset timer to correct duration based on session type
+    switch (_sessionType) {
+      case SessionType.focus:
+        _secondsRemaining = _focusMinutes * 60;
+        break;
+      case SessionType.shortBreak:
+        _secondsRemaining = _shortBreakMinutes * 60;
+        break;
+      case SessionType.longBreak:
+        _secondsRemaining = _longBreakMinutes * 60;
+        break;
+    }
     notifyListeners();
   }
 
   Future<void> _handleSessionSwitch() async {
-    // Trigger vibration untuk notifikasi transisi
-    if (await Vibration.hasVibrator()) {
-      // Pattern: vibrate-pause-vibrate untuk notifikasi yang jelas
-      Vibration.vibrate(pattern: [0, 500, 200, 500]);
+    // Cancel timer immediately to prevent re-entry while awaiting vibration
+    _timer?.cancel();
+
+    // Trigger vibration for session transition
+    try {
+      if (await Vibration.hasVibrator()) {
+        Vibration.vibrate(pattern: [0, 500, 200, 500]);
+      }
+    } catch (_) {
+      // Ignore vibration errors (e.g., on simulator/web)
     }
 
     if (_sessionType == SessionType.focus) {
-      // Focus selesai -> pindah ke break
       _completedPomodoros++;
 
-      // Check if it's time for a long break (every 4 pomodoros)
       if (_completedPomodoros % iterationsBeforeLongBreak == 0) {
         _sessionType = SessionType.longBreak;
         _secondsRemaining = _longBreakMinutes * 60;
@@ -237,7 +277,6 @@ class TimerProvider with ChangeNotifier {
         _secondsRemaining = _shortBreakMinutes * 60;
       }
     } else {
-      // Break selesai -> pindah ke focus berikutnya
       _currentIteration++;
       _sessionType = SessionType.focus;
       _secondsRemaining = _focusMinutes * 60;
@@ -245,7 +284,8 @@ class TimerProvider with ChangeNotifier {
 
     notifyListeners();
 
-    // Auto-start next session
+    // Restart timer for next session
+    _isRunning = false;
     startTimer();
   }
 
@@ -265,6 +305,10 @@ class TimerProvider with ChangeNotifier {
   @override
   void dispose() {
     _timer?.cancel();
+    _actionSubscription?.cancel();
+    try {
+      _notificationService?.cancelNotification();
+    } catch (_) {}
     super.dispose();
   }
 }

@@ -7,6 +7,7 @@ import 'package:studysphere_app/features/auth/providers/user_provider.dart';
 import 'package:studysphere_app/features/calender/providers/calendar_provider.dart';
 import 'package:studysphere_app/features/friend/providers/friend_provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:studysphere_app/features/study_tracker/services/notification_service.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +20,12 @@ void main() async {
   } finally {
     FlutterNativeSplash.remove();
   }
-  
+
+  // Initialize notifications & request permission early (Android 13+)
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+  await notificationService.requestPermission();
+
   runApp(const MyApp());
 }
 
