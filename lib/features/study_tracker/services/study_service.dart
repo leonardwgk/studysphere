@@ -10,8 +10,15 @@ import 'package:studysphere_app/shared/models/user_model.dart';
 
 class StudyService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final String _uid = FirebaseAuth.instance.currentUser?.uid ?? '';
   final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  String get _uid {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) {
+      throw StateError('User not authenticated. Cannot perform study operations.');
+    }
+    return uid;
+  }
 
   // Fungsi untuk menyimpan sesi ke Firestore (mengikuti Data Access Pattern)
   Future<void> saveAndPostSession({
@@ -23,8 +30,6 @@ class StudyService {
     String? description,
     String? imageUrl,
   }) async {
-    if (_uid.isEmpty) return;
-
     final batch = _db.batch();
     final now = DateTime.now();
     final dateStr =

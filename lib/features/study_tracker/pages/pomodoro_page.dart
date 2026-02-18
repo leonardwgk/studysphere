@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:vibration/vibration.dart';
 import '../providers/timer_provider.dart';
 import '../data/session_type.dart';
+import '../services/notification_service.dart';
 import 'post_study_page.dart';
 
 class PomodoroPage extends StatelessWidget {
@@ -17,8 +18,47 @@ class PomodoroPage extends StatelessWidget {
   }
 }
 
-class _PomodoroView extends StatelessWidget {
+class _PomodoroView extends StatefulWidget {
   const _PomodoroView();
+
+  @override
+  State<_PomodoroView> createState() => _PomodoroViewState();
+}
+
+class _PomodoroViewState extends State<_PomodoroView>
+    with WidgetsBindingObserver {
+  final NotificationService _notificationService = NotificationService();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _notificationService.initialize();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    // Cancel notification when leaving the page
+    _notificationService.cancelNotification();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final tp = context.read<TimerProvider>();
+
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      // App going to background — show persistent notification if timer active
+      if (tp.isRunning || tp.totalFocusElapsed > 0) {
+        tp.forceUpdateNotification();
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      // App back to foreground — notification stays for controls but
+      // we could optionally dismiss it here. Keep it for consistency.
+    }
+  }
 
   // Color scheme for different session types
   static const Color _focusColor = Color(0xFFFF6B6B); // Warm red-orange
@@ -53,17 +93,17 @@ class _PomodoroView extends StatelessWidget {
         case SessionType.focus:
           themeColor = _focusColor;
           backgroundColor = tp.isRunning ? _focusBgColor : Colors.white;
-          statusText = "Focus Time";
+          statusText = tp.isRunning ? "Focus Time" : "Paused";
           break;
         case SessionType.shortBreak:
           themeColor = _shortBreakColor;
-          backgroundColor = _shortBreakBgColor;
-          statusText = "Short Break";
+          backgroundColor = tp.isRunning ? _shortBreakBgColor : Colors.white;
+          statusText = tp.isRunning ? "Short Break" : "Paused";
           break;
         case SessionType.longBreak:
           themeColor = _longBreakColor;
-          backgroundColor = _longBreakBgColor;
-          statusText = "Long Break";
+          backgroundColor = tp.isRunning ? _longBreakBgColor : Colors.white;
+          statusText = tp.isRunning ? "Long Break" : "Paused";
           break;
       }
     }
@@ -86,19 +126,19 @@ class _PomodoroView extends StatelessWidget {
               child: Column(
                 children: [
                   _buildHeader(context, tp, themeColor),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 4),
                   _buildIterationBadge(tp, themeColor),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   _buildSubjectTitle(context, tp),
                   const Spacer(),
                   _buildTimerCircle(tp, themeColor, statusText),
+                  const SizedBox(height: 12),
+                  _buildNextSessionHint(tp, hasStarted),
                   const Spacer(),
                   _buildControls(context, tp, themeColor),
-                  const SizedBox(height: 16),
-                  // Skip break button - only visible during break sessions
-                  if (tp.isBreakSession) _buildSkipBreakButton(context, tp),
-                  const SizedBox(height: 12),
-                  _buildStopButton(context, tp),
+                  const SizedBox(height: 20),
+                  _buildBottomActions(context, tp),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -124,17 +164,25 @@ class _PomodoroView extends StatelessWidget {
   }
 
   Widget _buildIterationBadge(TimerProvider tp, Color themeColor) {
+    final int cycleProgress =
+        tp.completedPomodoros % TimerProvider.iterationsBeforeLongBreak;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.loop, size: 18, color: Colors.grey[700]),
-          const SizedBox(width: 8),
           Text(
             "Pomodoro #${tp.currentIteration}",
             style: TextStyle(
@@ -143,24 +191,29 @@ class _PomodoroView extends StatelessWidget {
               fontSize: 14,
             ),
           ),
-          if (tp.completedPomodoros > 0) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: themeColor,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                "✓ ${tp.completedPomodoros}",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+          const SizedBox(width: 12),
+          // Progress dots for the 4-pomodoro cycle
+          ...List.generate(TimerProvider.iterationsBeforeLongBreak, (i) {
+            final bool completed = i < cycleProgress;
+            final bool current =
+                i == cycleProgress && tp.sessionType == SessionType.focus;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: current ? 14 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: completed
+                      ? themeColor
+                      : current
+                          ? themeColor.withValues(alpha: 0.5)
+                          : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
-            ),
-          ],
+            );
+          }),
         ],
       ),
     );
@@ -180,6 +233,33 @@ class _PomodoroView extends StatelessWidget {
             icon: const Icon(Icons.arrow_back_ios, size: 20),
             onPressed: () => _handleBackButton(context, tp),
           ),
+          // Total study elapsed time badge
+          if (tp.totalFocusElapsed > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.timer_outlined,
+                      size: 14, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatDuration(tp.totalFocusElapsed),
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            const SizedBox(),
           IconButton(
             icon: Icon(
               Icons.settings_outlined,
@@ -209,6 +289,8 @@ class _PomodoroView extends StatelessWidget {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () {
+                tp.stopTimer();
+                _notificationService.cancelNotification();
                 Navigator.pop(ctx);
                 Navigator.pop(context);
               },
@@ -346,9 +428,12 @@ class _PomodoroView extends StatelessWidget {
           tp.pauseTimer();
         } else {
           // Vibrate on start
-          if (await Vibration.hasVibrator()) {
-            Vibration.vibrate(duration: 50);
-          }
+          try {
+            if (await Vibration.hasVibrator()) {
+              Vibration.vibrate(duration: 50);
+            }
+          } catch (_) {}
+          if (!context.mounted) return;
           tp.startTimer();
         }
       },
@@ -378,71 +463,135 @@ class _PomodoroView extends StatelessWidget {
     );
   }
 
-  Widget _buildSkipBreakButton(BuildContext context, TimerProvider tp) {
+  void _confirmSkipBreak(BuildContext context, TimerProvider tp) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Skip Break?"),
+        content: const Text(
+          "Are you sure you want to skip this break and start the next focus session?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              tp.skipBreak();
+              Navigator.pop(ctx);
+            },
+            child: const Text("Skip Break"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomActions(BuildContext context, TimerProvider tp) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: SizedBox(
-        width: double.infinity,
-        child: OutlinedButton.icon(
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text("Skip Break?"),
-                content: const Text(
-                  "Are you sure you want to skip this break and start the next focus session?",
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text("Cancel"),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      tp.skipBreak();
-                      Navigator.pop(ctx);
-                    },
-                    child: const Text("Skip Break"),
-                  ),
-                ],
-              ),
-            );
-          },
-          icon: const Icon(Icons.skip_next),
-          label: const Text("Skip Break"),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.grey[700],
-            side: BorderSide(color: Colors.grey[300]!),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (tp.isBreakSession) ...[
+            _buildActionChip(
+              icon: Icons.skip_next_rounded,
+              label: "Skip",
+              onTap: () => _confirmSkipBreak(context, tp),
+              color: Colors.grey[700]!,
             ),
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            const SizedBox(width: 16),
+          ],
+          _buildActionChip(
+            icon: Icons.flag_rounded,
+            label: "Finish",
+            onTap: () => _handleStop(context, tp),
+            color: Colors.red,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
+    return Material(
+      color: color.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildStopButton(BuildContext context, TimerProvider tp) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      child: ElevatedButton(
-        onPressed: () => _handleStop(context, tp),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red[50],
-          foregroundColor: Colors.red,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+  Widget _buildNextSessionHint(TimerProvider tp, bool hasStarted) {
+    if (!hasStarted) {
+      return Text(
+        "Tap ▶ to begin your session",
+        style: TextStyle(color: Colors.grey[500], fontSize: 13),
+      );
+    }
+
+    final String nextLabel;
+    final Color nextColor;
+    final String nextDuration;
+
+    if (tp.sessionType == SessionType.focus) {
+      final nextCompleted = tp.completedPomodoros + 1;
+      if (nextCompleted % TimerProvider.iterationsBeforeLongBreak == 0) {
+        nextLabel = "Long Break";
+        nextColor = _longBreakColor;
+        nextDuration = "${tp.longBreakMinutes}min";
+      } else {
+        nextLabel = "Short Break";
+        nextColor = _shortBreakColor;
+        nextDuration = "${tp.shortBreakMinutes}min";
+      }
+    } else {
+      nextLabel = "Focus #${tp.currentIteration + 1}";
+      nextColor = _focusColor;
+      nextDuration = "${tp.focusMinutes}min";
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.arrow_forward_rounded,
+            size: 14, color: nextColor.withValues(alpha: 0.6)),
+        const SizedBox(width: 4),
+        Text(
+          "Next: $nextLabel · $nextDuration",
+          style: TextStyle(
+            color: nextColor.withValues(alpha: 0.7),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
-          padding: const EdgeInsets.symmetric(vertical: 16),
         ),
-        child: const Text(
-          "Finish Session",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
+      ],
     );
   }
 
@@ -509,6 +658,7 @@ class _PomodoroView extends StatelessWidget {
               int breakTime = tp.totalBreakElapsed;
               String subject = tp.subject;
               tp.stopTimer();
+              _notificationService.cancelNotification();
               Navigator.pop(ctx);
               Navigator.pushReplacement(
                 context,

@@ -18,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   String? _emailErrorText;
   String? _passwordErrorText;
@@ -101,6 +102,7 @@ class _LoginPageState extends State<LoginPage> {
                       errorText: _emailErrorText,
                     ),
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 16.0),
 
@@ -117,10 +119,24 @@ class _LoginPageState extends State<LoginPage> {
                     decoration: kGetTextFieldDecoration(
                       hintText: "Password",
                       icon: Icons.lock_outlined,
-                      errorText:
-                          _passwordErrorText, // Ganti dengan variabel error password
+                      errorText: _passwordErrorText,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: Colors.grey[600],
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _login(),
                   ),
                   const SizedBox(height: 30.0),
 

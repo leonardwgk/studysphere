@@ -29,7 +29,7 @@ class UserModel {
 
   // Untuk mengubah data dari Firestore (Map) ke Object Dart
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    Map data = doc.data() as Map<String, dynamic>;
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>? ?? {};
     return UserModel(
       uid: doc.id,
       email: data['email'] ?? '',
@@ -41,7 +41,9 @@ class UserModel {
       followingCount: data['followingCount'] ?? 0,
       followersCount: data['followersCount'] ?? 0,
       badges: List<String>.from(data['badges'] ?? []),
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null && data['createdAt'] is Timestamp
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 

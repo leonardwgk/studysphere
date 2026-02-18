@@ -4,11 +4,13 @@ InputDecoration kGetTextFieldDecoration({
   required String hintText,
   required IconData icon,
   String? errorText,
+  Widget? suffixIcon,
 }) {
   return InputDecoration(
     hintText: hintText,
     prefixIcon: Icon(icon, color: Colors.grey[600]),
-    errorText: errorText, // Ambil dari parameter
+    suffixIcon: suffixIcon,
+    errorText: errorText,
 
     filled: true,
     fillColor: Colors.grey[100],

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:studysphere_app/shared/models/user_model.dart';
 import 'package:studysphere_app/features/friend/services/friend_service.dart';
@@ -40,7 +41,7 @@ class FriendProvider extends ChangeNotifier {
       _followingUids = await _friendService.getFollowingUids();
       notifyListeners();
     } catch (e) {
-      print("Error loading my following data: $e");
+      debugPrint("Error loading my following data: $e");
     }
   }
 
@@ -65,7 +66,7 @@ class FriendProvider extends ChangeNotifier {
       await _loadMyFollowingData(); 
 
     } catch (e) {
-      print("Error loading lists: $e");
+      debugPrint("Error loading lists: $e");
     } finally {
       _isLoadingList = false;
       notifyListeners();
@@ -101,7 +102,7 @@ class FriendProvider extends ChangeNotifier {
       final results = await _friendService.searchUsers(query);
       _searchResults = results;
     } catch (e) {
-      print("Provider Error: $e");
+      debugPrint("Provider Error: $e");
       _searchResults = [];
     } finally {
       _isLoading = false;
@@ -139,7 +140,7 @@ class FriendProvider extends ChangeNotifier {
         _followingUids.remove(user.uid);
       }
       notifyListeners();
-      print("Toggle follow error: $e");
+      debugPrint("Toggle follow error: $e");
     } finally {
       _loadingFollowUids.remove(user.uid);
       notifyListeners(); // Ensure loading state is cleared

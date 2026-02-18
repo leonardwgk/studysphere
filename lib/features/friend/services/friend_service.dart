@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:studysphere_app/shared/models/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -28,7 +29,7 @@ class FriendService {
           .where((user) => user.uid != currentUid)
           .toList();
     } catch (e) {
-      print("Error searching users: $e");
+      debugPrint("Error searching users: $e");
       return [];
     }
   }
@@ -47,7 +48,7 @@ class FriendService {
 
       return doc.exists;
     } catch (e) {
-      print("Error checking follow status: $e");
+      debugPrint("Error checking follow status: $e");
       return false;
     }
   }
@@ -66,7 +67,7 @@ class FriendService {
       // Mengambil field 'uid' dari dokumen subcollection
       return snapshot.docs.map((doc) => doc['uid'] as String).toSet();
     } catch (e) {
-      print("Error fetch following UIDs: $e");
+      debugPrint("Error fetch following UIDs: $e");
       return {};
     }
   }
@@ -111,9 +112,9 @@ class FriendService {
       batch.update(targetUserRef, {'followersCount': FieldValue.increment(1)});
 
       await batch.commit();
-      print("✅ Successfully followed user: $targetUid");
+      debugPrint("Successfully followed user: $targetUid");
     } catch (e) {
-      print("❌ Error following user: $e");
+      debugPrint("Error following user: $e");
       rethrow;
     }
   }
@@ -154,9 +155,9 @@ class FriendService {
       batch.update(targetUserRef, {'followersCount': FieldValue.increment(-1)});
 
       await batch.commit();
-      print("Successfully unfollowed user: $targetUid");
+      debugPrint("Successfully unfollowed user: $targetUid");
     } catch (e) {
-      print("Error unfollowing user: $e");
+      debugPrint("Error unfollowing user: $e");
       rethrow;
     }
   }
@@ -177,7 +178,7 @@ class FriendService {
 
       return await _getUsersByIds(followingIds);
     } catch (e) {
-      print("Error fetching following list: $e");
+      debugPrint("Error fetching following list: $e");
       return [];
     }
   }
@@ -198,7 +199,7 @@ class FriendService {
 
       return await _getUsersByIds(followerIds);
     } catch (e) {
-      print("Error fetching followers list: $e");
+      debugPrint("Error fetching followers list: $e");
       return [];
     }
   }
@@ -213,7 +214,7 @@ class FriendService {
           users.add(UserModel.fromFirestore(doc));
         }
       } catch (e) {
-        print("Skip user $id error: $e");
+        debugPrint("Skip user $id error: $e");
       }
     }
     return users;
