@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:studysphere_app/shared/models/user_model.dart';
+import 'package:studysphere_app/shared/utils/image_compression.dart';
 
 class ProfileService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -26,16 +27,24 @@ class ProfileService {
     });
   }
 
-  // 2. Upload Image
+  // 2. Upload Image (compressed below 1 MB)
   Future<String> uploadImage(String uid, File imageFile) async {
+    File? compressed;
     try {
+      // Compress profile photo to stay under 1 MB with adaptive quality
+      compressed = await compressImage(imageFile);
+
       final ref = FirebaseStorage.instance.ref().child(
         'users/$uid/profile.jpg',
       );
-      await ref.putFile(imageFile);
+      await ref.putFile(compressed);
       return await ref.getDownloadURL();
     } catch (e) {
       throw Exception('Gagal upload gambar.');
+    } finally {
+      if (compressed != null && compressed.path != imageFile.path) {
+        await deleteTempFile(compressed);
+      }
     }
   }
 

@@ -1,12 +1,19 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Callback handler for notification actions (must be top-level or static).
 @pragma('vm:entry-point')
 void _onNotificationAction(NotificationResponse response) {
-  // Route the action payload to the stream so the app can react
-  NotificationService._actionStreamController.add(response.payload ?? '');
+  // When an action button is tapped, the button ID is in actionId.
+  // When the notification body itself is tapped, use payload as fallback.
+  final String action = (response.actionId != null && response.actionId!.isNotEmpty)
+      ? response.actionId!
+      : (response.payload ?? '');
+  if (action.isNotEmpty) {
+    NotificationService._actionStreamController.add(action);
+  }
 }
 
 /// NotificationService handles timer notifications with media-style controls.
@@ -21,6 +28,39 @@ class NotificationService {
 
   bool _isInitialized = false;
   Future<void>? _initFuture;
+
+  /// Key for storing notification enabled preference
+  static const String _prefKey = 'notifications_enabled';
+
+  /// Whether notifications are enabled by the user.
+  /// Defaults to true. Loaded from SharedPreferences.
+  bool _enabled = true;
+  bool get enabled => _enabled;
+
+  /// Load the enabled preference from disk.
+  Future<void> _loadEnabledPref() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _enabled = prefs.getBool(_prefKey) ?? true;
+    } catch (_) {
+      _enabled = true;
+    }
+  }
+
+  /// Set whether notifications are enabled and persist the choice.
+  Future<void> setEnabled(bool value) async {
+    _enabled = value;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_prefKey, value);
+    } catch (e) {
+      debugPrint('Failed to save notification preference: $e');
+    }
+    // If user disables notifications, cancel any active one immediately
+    if (!value) {
+      await cancelNotification();
+    }
+  }
 
   /// Stream that emits action payloads when notification buttons are tapped.
   static final StreamController<String> _actionStreamController =
@@ -39,7 +79,7 @@ class NotificationService {
     if (_isInitialized) return;
 
     const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
+      '@drawable/ic_launcher_foreground',
     );
     const initSettings = InitializationSettings(android: androidSettings);
 
@@ -48,6 +88,7 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onNotificationAction,
       onDidReceiveBackgroundNotificationResponse: _onNotificationAction,
     );
+    await _loadEnabledPref();
     _isInitialized = true;
   }
 
@@ -60,6 +101,9 @@ class NotificationService {
     try {
       if (!_isInitialized) await initialize();
 
+      // Respect user preference — skip if notifications are disabled
+      if (!_enabled) return;
+
       // Build action buttons based on current state
       final List<AndroidNotificationAction> actions = [];
 
@@ -67,14 +111,14 @@ class NotificationService {
         actions.add(const AndroidNotificationAction(
           'pause',
           '⏸ Pause',
-          showsUserInterface: false,
+          showsUserInterface: true,
           cancelNotification: false,
         ));
       } else {
         actions.add(const AndroidNotificationAction(
           'resume',
           '▶ Resume',
-          showsUserInterface: false,
+          showsUserInterface: true,
           cancelNotification: false,
         ));
       }
@@ -82,7 +126,7 @@ class NotificationService {
       actions.add(const AndroidNotificationAction(
         'stop',
         '⏹ Stop',
-        showsUserInterface: true, // Bring app to foreground on stop
+        showsUserInterface: true,
         cancelNotification: false,
       ));
 
@@ -90,13 +134,14 @@ class NotificationService {
         'timer_channel',
         'Study Timer',
         channelDescription: 'Shows study timer progress with controls',
-        importance: Importance.low,
-        priority: Priority.low,
+        importance: Importance.high,
+        priority: Priority.high,
         ongoing: true,
         autoCancel: false,
         showWhen: false,
         playSound: false,
         enableVibration: false,
+        onlyAlertOnce: true,
         category: AndroidNotificationCategory.progress,
         actions: actions,
       );

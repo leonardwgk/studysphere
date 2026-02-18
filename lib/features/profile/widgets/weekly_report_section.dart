@@ -7,21 +7,31 @@ import 'package:studysphere_app/features/profile/services/profile_service.dart';
 class WeeklyReportSection extends StatelessWidget {
   const WeeklyReportSection({super.key});
 
-  // Format detik ke "4h 26m"
+  // Format seconds to readable string
   String _formatDuration(double totalSeconds) {
     int seconds = totalSeconds.toInt();
     int h = seconds ~/ 3600;
     int m = (seconds % 3600) ~/ 60;
     if (h == 0 && m == 0) return '0m';
+    if (h == 0) return '${m}m';
+    if (m == 0) return '${h}h';
     return '${h}h ${m}m';
+  }
+
+  // Format seconds to short bar label
+  String _formatBarLabel(double totalSeconds) {
+    if (totalSeconds == 0) return '';
+    int seconds = totalSeconds.toInt();
+    int h = seconds ~/ 3600;
+    int m = (seconds % 3600) ~/ 60;
+    if (h == 0) return '${m}m';
+    if (m == 0) return '${h}h';
+    return '${h}h${m}m';
   }
 
   @override
   Widget build(BuildContext context) {
-    // Ambil User ID dari Provider
     final user = context.watch<UserProvider>().user;
-
-    // Jika user belum load, sembunyikan section
     if (user == null) return const SizedBox();
 
     final profileService = ProfileService();
@@ -29,7 +39,6 @@ class WeeklyReportSection extends StatelessWidget {
     return FutureBuilder<Map<String, dynamic>>(
       future: profileService.getWeeklyProgress(user.uid),
       builder: (context, snapshot) {
-        // Data Default
         List<double> dailyData = List.filled(7, 0.0);
         double totalTime = 0;
         double avgTime = 0;
@@ -44,14 +53,17 @@ class WeeklyReportSection extends StatelessWidget {
           final start = data['startOfWeek'] as DateTime;
           final end = data['endOfWeek'] as DateTime;
           dateRange =
-              "(${DateFormat('d MMM').format(start)} - ${DateFormat('d MMM').format(end)})";
+              "${DateFormat('d MMM').format(start)} - ${DateFormat('d MMM').format(end)}";
         }
 
-        // Cari nilai tertinggi agar grafik proporsional
         double maxVal = dailyData.reduce(
           (curr, next) => curr > next ? curr : next,
         );
         if (maxVal == 0) maxVal = 1;
+
+        // Determine today's day index (0=Mon, 6=Sun)
+        final now = DateTime.now();
+        final todayIndex = now.weekday - 1; // weekday: 1=Mon, 7=Sun
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,103 +90,98 @@ class WeeklyReportSection extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Header Rata-rata ---
+                  // --- Header with stats ---
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Daily average
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _formatDuration(avgTime),
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Daily Average',
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Total + date range
                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            _formatDuration(avgTime),
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _formatDuration(totalTime),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue[700],
+                              ),
                             ),
                           ),
-                          const Text(
-                            'Daily average study time',
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                          const SizedBox(height: 4),
+                          Text(
+                            dateRange,
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 11,
+                            ),
                           ),
                         ],
                       ),
-                      Text(
-                        dateRange,
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 10,
-                        ),
-                      ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-                  // --- Grafik Batang ---
+                  // --- Bar Chart ---
                   SizedBox(
                     height: 180,
                     child: snapshot.connectionState == ConnectionState.waiting
                         ? const Center(child: CircularProgressIndicator())
                         : Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              _ChartBar(
-                                label: 'Mon',
-                                value: dailyData[0],
-                                max: maxVal,
-                              ),
-                              _ChartBar(
-                                label: 'Tue',
-                                value: dailyData[1],
-                                max: maxVal,
-                              ),
-                              _ChartBar(
-                                label: 'Wed',
-                                value: dailyData[2],
-                                max: maxVal,
-                              ),
-                              _ChartBar(
-                                label: 'Thu',
-                                value: dailyData[3],
-                                max: maxVal,
-                              ),
-                              _ChartBar(
-                                label: 'Fri',
-                                value: dailyData[4],
-                                max: maxVal,
-                              ),
-                              _ChartBar(
-                                label: 'Sat',
-                                value: dailyData[5],
-                                max: maxVal,
-                              ),
-                              _ChartBar(
-                                label: 'Sun',
-                                value: dailyData[6],
-                                max: maxVal,
-                              ),
-                            ],
+                            children: List.generate(7, (i) {
+                              const days = [
+                                'Mon',
+                                'Tue',
+                                'Wed',
+                                'Thu',
+                                'Fri',
+                                'Sat',
+                                'Sun'
+                              ];
+                              return Expanded(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 3),
+                                  child: _ChartBar(
+                                    label: days[i],
+                                    value: dailyData[i],
+                                    max: maxVal,
+                                    formattedValue:
+                                        _formatBarLabel(dailyData[i]),
+                                    isToday: i == todayIndex,
+                                  ),
+                                ),
+                              );
+                            }),
                           ),
-                  ),
-
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 10),
-
-                  // --- Footer Total ---
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Total Study Time',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      Text(
-                        _formatDuration(totalTime),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -190,51 +197,85 @@ class _ChartBar extends StatelessWidget {
   final String label;
   final double value;
   final double max;
+  final String formattedValue;
+  final bool isToday;
 
   const _ChartBar({
     required this.label,
     required this.value,
     required this.max,
+    required this.formattedValue,
+    required this.isToday,
   });
 
   @override
   Widget build(BuildContext context) {
     double heightPct = value / max;
-    if (heightPct < 0.05 && value > 0) {
-      heightPct = 0.05; // Minimal height visually
+    if (heightPct < 0.06 && value > 0) {
+      heightPct = 0.06;
     }
+
+    final bool hasValue = value > 0;
+    final Color barColor = isToday ? Colors.blue : Colors.blue.shade300;
+    final Color emptyColor =
+        isToday ? Colors.blue.shade50 : Colors.grey.shade100;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        if (value > 0)
-          Text(
-            "${(value / 3600).toStringAsFixed(1)}h",
-            style: const TextStyle(fontSize: 8, color: Colors.grey),
+        // Value label above bar
+        if (hasValue)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              formattedValue,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: isToday ? Colors.blue[700] : Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        const SizedBox(height: 4),
+        if (!hasValue) const SizedBox(height: 16),
 
+        // Bar
         AnimatedContainer(
           duration: const Duration(milliseconds: 600),
-          curve: Curves.easeOut,
-          width: 30,
-          height: value == 0 ? 5 : (120 * heightPct), // Max height visual 120
+          curve: Curves.easeOutCubic,
+          width: double.infinity,
+          height: hasValue ? (130 * heightPct).clamp(8, 130) : 6,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: value > 0
-                  ? [Colors.blue.shade200, Colors.blue.shade600]
-                  : [Colors.grey.shade200, Colors.grey.shade300],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+            color: hasValue ? barColor : emptyColor,
+            borderRadius: BorderRadius.circular(6),
           ),
         ),
         const SizedBox(height: 8),
+
+        // Day label
         Text(
           label,
-          style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
+            color: isToday ? Colors.blue[700] : Colors.grey[600],
+          ),
         ),
+
+        // Today dot indicator
+        if (isToday)
+          Container(
+            margin: const EdgeInsets.only(top: 3),
+            width: 4,
+            height: 4,
+            decoration: const BoxDecoration(
+              color: Colors.blue,
+              shape: BoxShape.circle,
+            ),
+          ),
+        if (!isToday) const SizedBox(height: 7),
       ],
     );
   }

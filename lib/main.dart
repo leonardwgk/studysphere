@@ -12,21 +12,25 @@ import 'package:studysphere_app/features/study_tracker/services/notification_ser
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
- 
+
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } catch (e) {
     debugPrint("Firebase initialization failed: $e");
-  } finally {
-    FlutterNativeSplash.remove();
   }
 
-  // Initialize notifications & request permission early (Android 13+)
-  final notificationService = NotificationService();
-  await notificationService.initialize();
-  await notificationService.requestPermission();
-
+  // Remove splash and launch app first so the UI is never stuck on white screen
+  FlutterNativeSplash.remove();
   runApp(const MyApp());
+
+  // Initialize notification service (but don't request permission here).
+  // Permission will be requested when the user first enters the app (in HomeGate).
+  try {
+    final notificationService = NotificationService();
+    await notificationService.initialize();
+  } catch (e) {
+    debugPrint("Notification initialization failed: $e");
+  }
 }
 
 class MyApp extends StatelessWidget {

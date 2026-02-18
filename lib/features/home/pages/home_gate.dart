@@ -7,6 +7,7 @@ import 'package:studysphere_app/features/home/pages/main_page.dart';
 import 'package:studysphere_app/features/home/providers/home_providers.dart';
 import 'package:studysphere_app/features/profile/pages/profile_page.dart';
 import 'package:studysphere_app/features/profile/widgets/app_bar.dart';
+import 'package:studysphere_app/features/study_tracker/services/notification_service.dart';
 
 class HomeGate extends StatelessWidget {
   const HomeGate({super.key});
@@ -47,7 +48,19 @@ class _HomeGateContentState extends State<_HomeGateContent> {
       const CalendarPage(),
       const ProfilePage(),
     ];
-    // JANGAN panggil _checkPendingSession(); karena filenya sudah tidak ada
+
+    // Request notification permission when user first enters the app.
+    // This shows the OS permission dialog on Android 13+.
+    _requestNotificationPermission();
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    try {
+      final notificationService = NotificationService();
+      await notificationService.requestPermission();
+    } catch (e) {
+      debugPrint('Failed to request notification permission: $e');
+    }
   }
 
   final List<TabItem> _tabs = const [
