@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/widgets.dart';
+import 'package:studysphere_app/features/home/services/social_notification_service.dart';
 import 'package:studysphere_app/shared/models/user_model.dart';
 import 'package:studysphere_app/shared/utils/image_compression.dart';
 
@@ -70,6 +71,15 @@ class StudyService {
     });
 
     await batch.commit();
+
+    // Fire-and-forget: send post notifications to all followers
+    SocialNotificationService().writePostNotificationsToFollowers(
+      senderId: user.uid,
+      senderUsername: user.username,
+      senderPhotoUrl: user.photoUrl,
+      postId: postRef.id,
+      postTitle: title,
+    );
   }
 
   Future<String?> uploadStudyImage(File file) async {

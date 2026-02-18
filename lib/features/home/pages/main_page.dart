@@ -64,10 +64,13 @@ class MainPageState extends State<MainPage> {
             listen: false,
           );
           if (userProvider.user != null) {
-            // Force refresh on pull-to-refresh
-            await context.read<CalendarProvider>().forceRefresh(
-              userProvider.user!.uid,
-            );
+            // Force refresh calendar data AND social feed in parallel
+            await Future.wait([
+              context.read<CalendarProvider>().forceRefresh(
+                userProvider.user!.uid,
+              ),
+              context.read<HomeProvider>().fetchPosts(),
+            ]);
           }
         },
         child: SingleChildScrollView(
@@ -79,7 +82,7 @@ class MainPageState extends State<MainPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const HeaderSection(),
+                HeaderSection(),
                 const SizedBox(height: 30),
                 ProgressCalendar(
                   onViewCalendar: () => widget.onNavigateToTab(2),

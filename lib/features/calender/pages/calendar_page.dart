@@ -155,8 +155,14 @@ class _CalendarPageState extends State<CalendarPage> {
                       listen: false,
                     );
                     if (userProvider.user != null) {
-                      await calendarProvider.forceRefresh(
+                      // softRefresh keeps existing data visible while reloading
+                      await calendarProvider.softRefresh(
                         userProvider.user!.uid,
+                      );
+                      // Also reload the currently focused month
+                      await calendarProvider.getMonthSummaries(
+                        userProvider.user!.uid,
+                        _focusedDay,
                       );
                     }
                   },
@@ -325,12 +331,16 @@ class _CalendarPageState extends State<CalendarPage> {
             children: [
               const Icon(Icons.check_circle, color: Colors.white, size: 28),
               const SizedBox(width: 12),
-              Text(
-                _formatDate(_selectedDay!),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  _formatDate(_selectedDay!),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -338,18 +348,22 @@ class _CalendarPageState extends State<CalendarPage> {
           const SizedBox(height: 16),
 
           // Title
-          const Row(
+          Row(
             children: [
-              Text(
-                'Study Session Completed',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  'Study Session Completed',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              SizedBox(width: 8),
-              Icon(Icons.emoji_events, color: Colors.amber, size: 24),
+              const SizedBox(width: 8),
+              const Icon(Icons.emoji_events, color: Colors.amber, size: 24),
             ],
           ),
           const SizedBox(height: 16),
@@ -505,12 +519,16 @@ class _CalendarPageState extends State<CalendarPage> {
                 size: 28,
               ),
               const SizedBox(width: 12),
-              Text(
-                _formatDate(_selectedDay!),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  _formatDate(_selectedDay!),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -518,12 +536,16 @@ class _CalendarPageState extends State<CalendarPage> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Text(
-                isFuture ? 'Upcoming Day' : 'No Study Session',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  isFuture ? 'Upcoming Day' : 'No Study Session',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 8),

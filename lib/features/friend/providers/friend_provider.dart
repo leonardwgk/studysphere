@@ -21,6 +21,9 @@ class FriendProvider extends ChangeNotifier {
   List<UserModel> _followingList = []; // List orang yang di-follow target
   bool _isLoadingList = false;
 
+  // Track which user's lists are currently loaded (for auto-refresh after toggle)
+  String? _lastLoadedListUserId;
+
   // Getters
   List<UserModel> get searchResults => _searchResults;
   bool get isLoading => _isLoading;
@@ -50,6 +53,7 @@ class FriendProvider extends ChangeNotifier {
     _isLoadingList = true;
     _followersList = []; // Reset dulu biar bersih
     _followingList = [];
+    _lastLoadedListUserId = targetUserId; // Remember for auto-refresh
     notifyListeners();
 
     try {
@@ -70,6 +74,23 @@ class FriendProvider extends ChangeNotifier {
     } finally {
       _isLoadingList = false;
       notifyListeners();
+    }
+  }
+
+  /// Silently re-fetch follow lists without showing a loading spinner.
+  /// Keeps the UI responsive while ensuring data consistency after toggle.
+  Future<void> _softRefreshFollowLists(String targetUserId) async {
+    try {
+      final results = await Future.wait([
+        _friendService.getFollowersList(targetUserId),
+        _friendService.getFollowingList(targetUserId),
+      ]);
+
+      _followersList = results[0];
+      _followingList = results[1];
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error soft-refreshing follow lists: $e");
     }
   }
 
@@ -110,7 +131,8 @@ class FriendProvider extends ChangeNotifier {
     }
   }
 
-  // --- Toggle Follow Logic (Tetap sama, logic ini akan update UI otomatis) ---
+  // --- Toggle Follow Logic ---
+  // Optimistic UI + server reconciliation for ACID consistency
   Future<void> toggleFollow(UserModel user) async {
     if (_loadingFollowUids.contains(user.uid)) return;
 
@@ -132,6 +154,15 @@ class FriendProvider extends ChangeNotifier {
       } else {
         await _friendService.followUser(user.uid);
       }
+
+      // --- Server reconciliation: re-sync local state from Firestore ---
+      // This ensures _followingUids matches the actual Firestore data
+      await _loadMyFollowingData();
+
+      // If follow lists are loaded (e.g. FollowListPage is open), refresh them
+      if (_lastLoadedListUserId != null) {
+        await _softRefreshFollowLists(_lastLoadedListUserId!);
+      }
     } catch (e) {
       // Rollback jika error
       if (isCurrentlyFollowing) {
@@ -151,6 +182,13 @@ class FriendProvider extends ChangeNotifier {
     _searchResults = [];
     _isLoading = false;
     notifyListeners();
+  }
+
+  /// Call when leaving FollowListPage to stop auto-refreshing lists on toggle.
+  void clearFollowLists() {
+    _lastLoadedListUserId = null;
+    _followersList = [];
+    _followingList = [];
   }
 
   @override

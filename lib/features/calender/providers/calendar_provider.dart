@@ -262,6 +262,49 @@ class CalendarProvider extends ChangeNotifier {
     await _getMonthSummariesInternal(now.year, now.month);
   }
 
+  /// Silently refresh data in the background **without** clearing the cache or
+  /// showing the loading indicator. Use this for pull-to-refresh on the
+  /// Calendar page and when navigating to the Calendar tab, so existing
+  /// markers / dots stay visible during the reload.
+  Future<void> softRefresh(String userId) async {
+    if (userId.isEmpty) return;
+    setUserId(userId);
+
+    debugPrint("🔄 Soft-refreshing calendar data (no wipe)");
+
+    try {
+      final now = DateTime.now();
+
+      // 1. Re-fetch weekly summaries
+      final freshWeekly = await _calendarService.getWeeklySummaries(_userId!);
+      _weeklySummaries = freshWeekly;
+
+      // 2. Update today's summary
+      final todayStr = _getDateKey(now);
+      _todaySummary = _weeklySummaries.firstWhere(
+        (s) => s.date == todayStr,
+        orElse: () => SummaryModel(userId: _userId!, date: todayStr),
+      );
+
+      // 3. Re-fetch current month from Firestore and replace cache entry
+      //    (old data stays visible until the fetch is done)
+      final freshMonth = await _calendarService.getMonthlySummaries(
+        _userId!,
+        now.year,
+        now.month,
+      );
+      _monthCache[_getMonthKey(now.year, now.month)] = freshMonth;
+
+      // 4. Clear session cache so next day-tap re-fetches fresh data
+      _sessionCache.clear();
+
+      notifyListeners();
+      debugPrint("✅ Soft-refresh complete");
+    } catch (e) {
+      debugPrint("Error in softRefresh: $e");
+    }
+  }
+
   /// Invalidate cache for a specific date (after posting)
   void invalidateDate(DateTime date) {
     final dateKey = _getDateKey(date);

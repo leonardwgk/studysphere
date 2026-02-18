@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:studysphere_app/features/auth/providers/user_provider.dart';
+import 'package:studysphere_app/features/home/pages/notifications_page.dart';
+import 'package:studysphere_app/features/home/services/social_notification_service.dart';
 import 'package:studysphere_app/shared/widgets/custom_avatar.dart';
 
 class HeaderSection extends StatelessWidget {
-  const HeaderSection({super.key});
+  HeaderSection({super.key});
+
+  final SocialNotificationService _notifService = SocialNotificationService();
 
   @override
   Widget build(BuildContext context) {
@@ -52,11 +56,29 @@ class HeaderSection extends StatelessWidget {
             ),
           ],
         ),
-        IconButton(
-          onPressed: () {
-            // Logika notifikasi nanti
+        StreamBuilder<int>(
+          stream: _notifService.getUnreadCountStream(),
+          builder: (context, snapshot) {
+            final unreadCount = snapshot.data ?? 0;
+            return Badge(
+              isLabelVisible: unreadCount > 0,
+              label: Text(
+                unreadCount > 9 ? '9+' : '$unreadCount',
+                style: const TextStyle(fontSize: 10),
+              ),
+              child: IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationsPage(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.notifications_none, size: 30),
+              ),
+            );
           },
-          icon: const Icon(Icons.notifications_none, size: 30),
         ),
       ],
     );

@@ -24,6 +24,7 @@ class FollowListPage extends StatefulWidget {
 
 class _FollowListPageState extends State<FollowListPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late FriendProvider _friendProvider;
 
   @override
   void initState() {
@@ -32,8 +33,17 @@ class _FollowListPageState extends State<FollowListPage> with SingleTickerProvid
     
     // Panggil provider untuk load data saat halaman dibuka
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FriendProvider>().loadFollowLists(widget.userId);
+      _friendProvider = context.read<FriendProvider>();
+      _friendProvider.loadFollowLists(widget.userId);
     });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    // Clear tracked list so toggleFollow stops auto-refreshing after page closes
+    _friendProvider.clearFollowLists();
+    super.dispose();
   }
 
   @override

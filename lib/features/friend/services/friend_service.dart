@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:studysphere_app/features/home/services/social_notification_service.dart';
 import 'package:studysphere_app/shared/models/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -79,15 +80,22 @@ class FriendService {
     }
 
     try {
-      final batch = _firestore.batch();
-
-      // 1. Tambahkan relasi di koleksi 'follows'
+      // Guard: skip if already following (prevents double-increment)
       final followingRef = _firestore
           .collection('follows')
           .doc(currentUid)
           .collection('following')
           .doc(targetUid);
 
+      final existingDoc = await followingRef.get();
+      if (existingDoc.exists) {
+        debugPrint('Already following $targetUid — skipping.');
+        return;
+      }
+
+      final batch = _firestore.batch();
+
+      // 1. Tambahkan relasi di koleksi 'follows'
       final followerRef = _firestore
           .collection('follows')
           .doc(targetUid)
@@ -113,9 +121,32 @@ class FriendService {
 
       await batch.commit();
       debugPrint("Successfully followed user: $targetUid");
+
+      // Fire follow notification (fire-and-forget, won't break follow if it fails)
+      _sendFollowNotification(targetUid);
     } catch (e) {
       debugPrint("Error following user: $e");
       rethrow;
+    }
+  }
+
+  /// Fetch current user's profile and write a follow notification to [targetUid].
+  Future<void> _sendFollowNotification(String targetUid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(currentUid).get();
+      if (!doc.exists) return;
+
+      final senderUsername = doc.data()?['username'] as String? ?? '';
+      final senderPhotoUrl = doc.data()?['photoUrl'] as String? ?? '';
+
+      await SocialNotificationService().writeFollowNotification(
+        senderId: currentUid,
+        senderUsername: senderUsername,
+        senderPhotoUrl: senderPhotoUrl,
+        recipientId: targetUid,
+      );
+    } catch (e) {
+      debugPrint('Failed to send follow notification: $e');
     }
   }
 
@@ -126,15 +157,22 @@ class FriendService {
     }
 
     try {
-      final batch = _firestore.batch();
-
-      // 1. Hapus relasi di koleksi 'follows'
+      // Guard: skip if not actually following (prevents decrementing below 0)
       final followingRef = _firestore
           .collection('follows')
           .doc(currentUid)
           .collection('following')
           .doc(targetUid);
 
+      final existingDoc = await followingRef.get();
+      if (!existingDoc.exists) {
+        debugPrint('Not following $targetUid — skipping unfollow.');
+        return;
+      }
+
+      final batch = _firestore.batch();
+
+      // 1. Hapus relasi di koleksi 'follows'
       final followerRef = _firestore
           .collection('follows')
           .doc(targetUid)

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:studysphere_app/features/auth/providers/user_provider.dart';
 import 'package:studysphere_app/features/calender/pages/calendar_page.dart';
+import 'package:studysphere_app/features/calender/providers/calendar_provider.dart';
 import 'package:studysphere_app/features/friend/pages/friend_page.dart';
 import 'package:studysphere_app/features/home/data/tabitems.dart';
 import 'package:studysphere_app/features/home/pages/main_page.dart';
@@ -63,6 +65,24 @@ class _HomeGateContentState extends State<_HomeGateContent> {
     }
   }
 
+  void _handleBottomNavTap(BuildContext context, int index) {
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    homeProvider.onBottomNavTap(index);
+
+    // Auto-reload calendar data each time user taps the Calendar tab
+    if (index == 2) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final calendarProvider = Provider.of<CalendarProvider>(
+        context,
+        listen: false,
+      );
+      if (userProvider.user != null) {
+        // softRefresh: keeps existing data on screen while re-fetching in background
+        calendarProvider.softRefresh(userProvider.user!.uid);
+      }
+    }
+  }
+
   final List<TabItem> _tabs = const [
     TabItem('Home', Icons.home),
     TabItem('Groups', Icons.people),
@@ -92,7 +112,7 @@ class _HomeGateContentState extends State<_HomeGateContent> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: currIdx,
-        onTap: homeProvider.onBottomNavTap,
+        onTap: (index) => _handleBottomNavTap(context, index),
         items: List.generate(_tabs.length, (i) {
           final t = _tabs[i];
           final baseIcon = Icon(t.icon);
