@@ -80,8 +80,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
       }
     } catch (e) {
       if (mounted) {
-        // Bersihkan pesan error (hapus kata "Exception: ")
-        String errorMessage = e.toString().replaceAll("Exception: ", "");
+        // Show user-friendly error, keep internals hidden
+        String errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+        final rawMessage = e.toString().replaceAll('Exception: ', '');
+        // Only show specific known errors
+        if (rawMessage.contains('already taken') ||
+            rawMessage.contains('sudah terdaftar')) {
+          errorMessage = rawMessage;
+        }
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -131,7 +137,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         : NetworkImage(
                             widget.user.photoUrl.isNotEmpty
                                 ? widget.user.photoUrl
-                                : 'https://ui-avatars.com/api/?name=${widget.user.username}',
+                                : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(widget.user.username)}',
                           ),
                   ),
                   const Positioned(
@@ -154,6 +160,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
             TextField(
               controller: _usernameController,
+              maxLength: 30,
               inputFormatters: [
                 FilteringTextInputFormatter.deny(
                   RegExp(r'\s'),

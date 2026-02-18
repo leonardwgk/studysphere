@@ -4,6 +4,7 @@ import 'package:studysphere_app/features/auth/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:studysphere_app/shared/constant.dart';
+import 'package:studysphere_app/shared/password_validator.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -15,7 +16,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final AuthService _authService = AuthService();
 
-  // text controller
+  // text controllers
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -24,23 +25,65 @@ class _RegisterPageState extends State<RegisterPage> {
   // loading state
   bool _isLoading = false;
 
+  // password visibility toggles
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
+  // show password strength after user starts typing
+  bool _passwordHasInput = false;
+
   String? _emailErrorText;
   String? _passwordErrorText;
   String? _confirmPasswordErrorText;
 
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_onPasswordChanged);
+    _confirmPasswordController.addListener(_onConfirmPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    setState(() {
+      _passwordHasInput = _passwordController.text.isNotEmpty;
+      if (_passwordErrorText != null) _passwordErrorText = null;
+      if (_confirmPasswordErrorText != null &&
+          _confirmPasswordController.text.isNotEmpty &&
+          _passwordController.text == _confirmPasswordController.text) {
+        _confirmPasswordErrorText = null;
+      }
+    });
+  }
+
+  void _onConfirmPasswordChanged() {
+    setState(() {
+      if (_confirmPasswordErrorText != null) _confirmPasswordErrorText = null;
+    });
+  }
+
+  @override
+  void dispose() {
+    _passwordController.removeListener(_onPasswordChanged);
+    _confirmPasswordController.removeListener(_onConfirmPasswordChanged);
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   // fungsi register
   void _register() async {
-    // Set loading + clear
+    // Set loading + clear errors
     setState(() {
       _isLoading = true;
       _emailErrorText = null;
       _passwordErrorText = null;
       _confirmPasswordErrorText = null;
     });
+
     // validasi input
     final String email = _emailController.text.trim();
     final bool isEmailValid = EmailValidator.validate(email);
-
     final String password = _passwordController.text;
     final String confirmPassword = _confirmPasswordController.text;
 
@@ -57,8 +100,8 @@ class _RegisterPageState extends State<RegisterPage> {
     if (password.isEmpty) {
       _passwordErrorText = "Password tidak boleh kosong.";
       hasClientError = true;
-    } else if (password.length < 6) {
-      _passwordErrorText = "Password minimal 6 karakter.";
+    } else if (PasswordValidator.getStrength(password) <= 0.5) {
+      _passwordErrorText = "Password minimal harus kekuatan 'Sedang'.";
       hasClientError = true;
     }
 
@@ -85,7 +128,6 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (mounted) {
-        // BERI TAHU USER KALAU SUKSES
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -94,8 +136,6 @@ class _RegisterPageState extends State<RegisterPage> {
             backgroundColor: Colors.green,
           ),
         );
-
-        // Kembali ke halaman login
         Navigator.pop(context);
       }
     } on FirebaseAuthException catch (e) {
@@ -114,7 +154,6 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      // Handle generic errors (e.g. Firestore network error)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Terjadi kesalahan: ${e.toString()}")),
       );
@@ -127,13 +166,92 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
+  /// Builds a subtle inline strength indicator below the password field.
+  Widget _buildStrengthIndicator() {
+    if (!_passwordHasInput) return const SizedBox.shrink();
+
+    final strength = PasswordValidator.getStrength(_passwordController.text);
+    final label = PasswordValidator.getStrengthLabel(_passwordController.text);
+    final allMet = PasswordValidator.isValid(_passwordController.text);
+
+    // Dynamic hint: show what's still missing, or a success message
+    final unmet = PasswordValidator.validate(_passwordController.text)
+        .where((r) => !r.isMet)
+        .map((r) => r.label.toLowerCase())
+        .toList();
+
+    final hint = allMet ? 'Password kuat!' : 'Perlu: ${unmet.join(', ')}';
+
+    Color barColor;
+    if (strength <= 0.25) {
+      barColor = Colors.red;
+    } else if (strength <= 0.5) {
+      barColor = Colors.orange;
+    } else if (strength <= 0.75) {
+      barColor = Colors.amber.shade700;
+    } else {
+      barColor = Colors.green;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6.0, left: 2.0, right: 2.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Thin strength bar — 4 segmented blocks
+          Row(
+            children: List.generate(4, (i) {
+              final segmentFilled = strength > (i / 4);
+              return Expanded(
+                child: Container(
+                  height: 3.5,
+                  margin: EdgeInsets.only(right: i < 3 ? 4 : 0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(2),
+                    color: segmentFilled
+                        ? barColor
+                        : Colors.grey.shade200,
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 4),
+          // Single-line hint
+          Row(
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: barColor,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  hint,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: allMet ? Colors.green.shade600 : Colors.grey[500],
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
-          // Biar bisa scroll pas keyboard muncul
           child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(24.0),
@@ -156,81 +274,110 @@ class _RegisterPageState extends State<RegisterPage> {
                     },
                     decoration: kGetTextFieldDecoration(
                       hintText: "Email",
-                      icon: Icons.lock_outlined,
-                      errorText:
-                          _emailErrorText, // Ganti dengan variabel error password
+                      icon: Icons.email_outlined,
+                      errorText: _emailErrorText,
                     ),
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 16.0),
 
                   // --- TextField Password ---
                   TextField(
                     controller: _passwordController,
-                    onChanged: (_) {
-                      if (_passwordErrorText != null) {
-                        setState(() {
-                          _passwordErrorText = null;
-                        });
-                      }
-                    },
                     decoration: kGetTextFieldDecoration(
-                      hintText: "Password (Minimal 6 karakter)",
+                      hintText: "Password",
                       icon: Icons.lock_outlined,
-                      errorText:
-                          _passwordErrorText, // Ganti dengan variabel error password
+                      errorText: _passwordErrorText,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: Colors.grey[600],
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.next,
                   ),
+                  // Inline strength indicator
+                  _buildStrengthIndicator(),
                   const SizedBox(height: 16.0),
 
                   // --- TextField Konfirmasi Password ---
                   TextField(
                     controller: _confirmPasswordController,
-                    onChanged: (_) {
-                      if (_confirmPasswordErrorText != null) {
-                        setState(() {
-                          _confirmPasswordErrorText = null;
-                        });
-                      }
-                    },
                     decoration: kGetTextFieldDecoration(
                       hintText: "Konfirmasi Password",
                       icon: Icons.lock_outlined,
-                      errorText:
-                          _confirmPasswordErrorText, // Ganti dengan variabel error password
+                      errorText: _confirmPasswordErrorText,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: Colors.grey[600],
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureConfirmPassword =
+                                !_obscureConfirmPassword;
+                          });
+                        },
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: _obscureConfirmPassword,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _register(),
                   ),
                   const SizedBox(height: 30.0),
 
-                  // Tampilkan Tombol atau Loading
-                  _isLoading
-                      ? const CircularProgressIndicator()
-                      : SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _register,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16.0,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.primary,
+                  // --- Register Button or Loading ---
+                  Builder(
+                    builder: (context) {
+                      final passwordStrength = PasswordValidator.getStrength(
+                        _passwordController.text,
+                      );
+                      final canRegister = passwordStrength > 0.5;
+
+                      if (_isLoading) {
+                        return const CircularProgressIndicator();
+                      }
+
+                      return SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: canRegister ? _register : null,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16.0,
                             ),
-                            child: const Text(
-                              "Daftar",
-                              style: TextStyle(
-                                fontSize: 16.0,
-                                color: Colors.white,
-                              ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            backgroundColor: canRegister
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.grey.shade300,
+                          ),
+                          child: Text(
+                            "Daftar",
+                            style: TextStyle(
+                              fontSize: 16.0,
+                              color: canRegister
+                                  ? Colors.white
+                                  : Colors.grey.shade500,
                             ),
                           ),
                         ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 4.0),
 
                   Row(

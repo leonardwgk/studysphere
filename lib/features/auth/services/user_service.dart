@@ -10,7 +10,11 @@ class UserService {
 
   /// Get real-time stream of current user's data
   Stream<UserModel> getUserStream() {
-    String uid = _auth.currentUser!.uid;
+    final user = _auth.currentUser;
+    if (user == null) {
+      return Stream.error(Exception('User not authenticated'));
+    }
+    String uid = user.uid;
     return _firestore.collection('users').doc(uid).snapshots().map((snapshot) {
       if (snapshot.exists) {
         return UserModel.fromFirestore(snapshot);

@@ -38,7 +38,7 @@ FieldErrors mapFirebaseAuthError(FirebaseAuthException e) {
       emailErr = 'Email sudah terdaftar.';
       break;
     case 'weak-password':
-      passErr = 'Password terlalu lemah (minimal 6 karakter).';
+      passErr = 'Password terlalu lemah. Gunakan minimal 8 karakter dengan huruf besar, huruf kecil, dan angka.';
       break;
     case 'operation-not-allowed':
       globalMsg = 'Metode pendaftaran tidak diaktifkan.';

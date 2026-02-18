@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:studysphere_app/shared/models/user_model.dart';
 
@@ -11,7 +12,11 @@ class ProfileService {
 
   // 1. Get User Stream
   Stream<UserModel> getUserStream() {
-    String uid = _auth.currentUser!.uid;
+    final user = _auth.currentUser;
+    if (user == null) {
+      return Stream.error(Exception('User not authenticated'));
+    }
+    String uid = user.uid;
     return _firestore.collection('users').doc(uid).snapshots().map((snapshot) {
       if (snapshot.exists) {
         return UserModel.fromFirestore(snapshot);
@@ -30,7 +35,7 @@ class ProfileService {
       await ref.putFile(imageFile);
       return await ref.getDownloadURL();
     } catch (e) {
-      throw Exception('Gagal upload gambar: $e');
+      throw Exception('Gagal upload gambar.');
     }
   }
 
@@ -176,7 +181,7 @@ class ProfileService {
         'endOfWeek': startOfWeek.add(const Duration(days: 6)),
       };
     } catch (e) {
-      print("Error getting daily_summaries: $e");
+      debugPrint("Error getting daily_summaries: $e");
       return {
         'dailyTotals': List.filled(7, 0.0),
         'totalWeekSeconds': 0.0,
