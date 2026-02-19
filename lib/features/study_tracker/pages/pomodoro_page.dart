@@ -108,41 +108,48 @@ class _PomodoroViewState extends State<_PomodoroView>
       }
     }
 
-    return Scaffold(
-      body: AnimatedContainer(
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [backgroundColor, backgroundColor.withValues(alpha: 0.7)],
-          ),
-        ),
-        child: Stack(
-          children: [
-            _buildBackground(),
-            SafeArea(
-              child: Column(
-                children: [
-                  _buildHeader(context, tp, themeColor),
-                  const SizedBox(height: 4),
-                  _buildIterationBadge(tp, themeColor),
-                  const SizedBox(height: 8),
-                  _buildSubjectTitle(context, tp),
-                  const Spacer(),
-                  _buildTimerCircle(tp, themeColor, statusText),
-                  const SizedBox(height: 12),
-                  _buildNextSessionHint(tp, hasStarted),
-                  const Spacer(),
-                  _buildControls(context, tp, themeColor),
-                  const SizedBox(height: 20),
-                  _buildBottomActions(context, tp),
-                  const SizedBox(height: 24),
-                ],
-              ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handleBackButton(context, tp);
+      },
+      child: Scaffold(
+        body: AnimatedContainer(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [backgroundColor, backgroundColor.withValues(alpha: 0.7)],
             ),
-          ],
+          ),
+          child: Stack(
+            children: [
+              _buildBackground(),
+              SafeArea(
+                child: Column(
+                  children: [
+                    _buildHeader(context, tp, themeColor),
+                    const SizedBox(height: 4),
+                    _buildIterationBadge(tp, themeColor),
+                    const SizedBox(height: 8),
+                    _buildSubjectTitle(context, tp),
+                    const Spacer(),
+                    _buildTimerCircle(tp, themeColor, statusText),
+                    const SizedBox(height: 12),
+                    _buildNextSessionHint(tp, hasStarted),
+                    const Spacer(),
+                    _buildControls(context, tp, themeColor),
+                    const SizedBox(height: 20),
+                    _buildBottomActions(context, tp),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

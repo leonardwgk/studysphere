@@ -4,9 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:studysphere_app/shared/models/user_model.dart';
+import 'package:studysphere_app/shared/utils/image_compression.dart';
 
 class StudyService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -74,47 +73,25 @@ class StudyService {
   }
 
   Future<String?> uploadStudyImage(File file) async {
+    File? compressed;
     try {
-      // 1. Tanya OS: "Mana folder sampah/sementara saya?"
-      final Directory tempDir = await getTemporaryDirectory();
+      // Compress image to stay under 1 MB with adaptive quality
+      compressed = await compressImage(file);
 
-      // 2. Buat nama file unik agar tidak bentrok
-      final String targetPath =
-          "${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg";
+      final String fileName = 'post_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final Reference ref = _storage.ref().child('posts/$_uid/$fileName');
 
-      // Kompresi ke format webp atau jpg (webp biasanya lebih kecil)
-      XFile? compressedFile = await FlutterImageCompress.compressAndGetFile(
-        file.absolute.path,
-        targetPath,
-        quality: 70, // Keseimbangan terbaik kualitas/ukuran
-        format: CompressFormat.jpeg,
-      );
-
-      if (compressedFile == null) return null;
-
-      // 2. Tentukan Jalur Storage (Sesuai Security Rules kita)
-      String fileName = "post_${DateTime.now().millisecondsSinceEpoch}.jpg";
-      Reference ref = _storage.ref().child("posts/$_uid/$fileName");
-
-      // 3. Upload
-      await ref.putFile(File(compressedFile.path));
-
+      await ref.putFile(compressed);
       final downloadUrl = await ref.getDownloadURL();
-
-      // Cleanup: Hapus file sementara setelah berhasil diunggah
-      try {
-        final tempFile = File(compressedFile.path);
-        if (await tempFile.exists()) {
-          await tempFile.delete();
-        }
-      } catch (e) {
-        debugPrint("Gagal menghapus file temp: $e");
-      }
-
       return downloadUrl;
     } catch (e) {
-      debugPrint("Error upload image: $e");
+      debugPrint('Error upload image: $e');
       return null;
+    } finally {
+      // Clean up temp file regardless of success or failure
+      if (compressed != null && compressed.path != file.path) {
+        await deleteTempFile(compressed);
+      }
     }
   }
 
